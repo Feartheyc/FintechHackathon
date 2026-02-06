@@ -16,6 +16,9 @@ if "completed_levels" not in st.session_state:
 if "current_level" not in st.session_state:
     st.session_state.current_level = 1
 
+if "view" not in st.session_state:
+    st.session_state.view = "map"   # "map" or "level"
+
 # -------------------------------------------------
 # HANDLE LEVEL CLICK FROM SVG (QUERY PARAMS)
 # -------------------------------------------------
@@ -25,18 +28,20 @@ if "level" in query:
         lvl = int(query["level"])
         if lvl in st.session_state.completed_levels:
             st.session_state.current_level = lvl
+            st.session_state.view = "level"   # 🔥 TRANSITION
+            st.query_params.clear()           # 🔥 CLEAN URL
     except:
         pass
 
 # -------------------------------------------------
-# UTIL: IMAGE TO BASE64
+# UTIL
 # -------------------------------------------------
 def img_to_base64(path):
     with open(path, "rb") as f:
         return base64.b64encode(f.read()).decode()
 
 # -------------------------------------------------
-# LOAD ROLE-SPECIFIC BACKGROUNDS
+# BACKGROUNDS
 # -------------------------------------------------
 BG_MAPS = {
     "🌾 Farmer": img_to_base64("assets/map_farmer.png"),
@@ -45,7 +50,7 @@ BG_MAPS = {
 }
 
 # -------------------------------------------------
-# ROLE-BASED MAP DATA
+# MAP DATA
 # -------------------------------------------------
 MAPS = {
     "🌾 Farmer": {
@@ -81,7 +86,7 @@ MAPS = {
 }
 
 # -------------------------------------------------
-# UI HEADER
+# HEADER
 # -------------------------------------------------
 st.title("🗺️ Financial Journey")
 
@@ -93,84 +98,88 @@ role = st.radio(
 
 st.divider()
 
-# -------------------------------------------------
-# BUILD MAP FOR SELECTED ROLE
-# -------------------------------------------------
-nodes = MAPS[role]["nodes"]
-paths = MAPS[role]["paths"]
-bg_img = BG_MAPS[role]
+# =================================================
+# MAP VIEW
+# =================================================
+if st.session_state.view == "map":
 
-svg_parts = []
+    nodes = MAPS[role]["nodes"]
+    paths = MAPS[role]["paths"]
+    bg_img = BG_MAPS[role]
 
-# ---- PATHS ----
-for start, end in paths:
-    if start in st.session_state.completed_levels:
-        x1, y1 = nodes[start]
-        x2, y2 = nodes[end]
+    svg_parts = []
 
-        svg_parts.append(
-            f"""
-            <path d="M{x1} {y1}
-                     C {(x1+x2)//2} {y1-160},
-                       {(x1+x2)//2} {y2+160},
-                       {x2} {y2}"
-                  stroke="#ffd966"
-                  stroke-width="6"
-                  fill="none"
-                  stroke-linecap="round"/>
-            """
-        )
+    # ---- PATHS ----
+    for start, end in paths:
+        if start in st.session_state.completed_levels:
+            x1, y1 = nodes[start]
+            x2, y2 = nodes[end]
 
-# ---- LEVEL CROSSES ----
-for level, (x, y) in nodes.items():
-    unlocked = level in st.session_state.completed_levels
-    color = "#ff5252" if unlocked else "#666"
+            svg_parts.append(
+                f"""
+                <path d="M{x1} {y1}
+                         C {(x1+x2)//2} {y1-160},
+                           {(x1+x2)//2} {y2+160},
+                           {x2} {y2}"
+                      stroke="#ffd966"
+                      stroke-width="6"
+                      fill="none"
+                      stroke-linecap="round"/>
+                """
+            )
 
-    cross = f"""
-        <line x1="{x-14}" y1="{y-14}" x2="{x+14}" y2="{y+14}"
-              stroke="{color}" stroke-width="4" stroke-linecap="round"/>
-        <line x1="{x+14}" y1="{y-14}" x2="{x-14}" y2="{y+14}"
-              stroke="{color}" stroke-width="4" stroke-linecap="round"/>
+    # ---- CROSSES ----
+    for level, (x, y) in nodes.items():
+        unlocked = level in st.session_state.completed_levels
+        color = "#ff5252" if unlocked else "#666"
+
+        cross = f"""
+            <line x1="{x-14}" y1="{y-14}" x2="{x+14}" y2="{y+14}"
+                  stroke="{color}" stroke-width="4" stroke-linecap="round"/>
+            <line x1="{x+14}" y1="{y-14}" x2="{x-14}" y2="{y+14}"
+                  stroke="{color}" stroke-width="4" stroke-linecap="round"/>
+        """
+
+        if unlocked:
+            svg_parts.append(f'<a href="?level={level}">{cross}</a>')
+        else:
+            svg_parts.append(cross)
+
+    svg_html = f"""
+    <div style="overflow-x:auto;">
+    <svg viewBox="0 0 1400 760"
+         width="1400"
+         height="760"
+         preserveAspectRatio="xMidYMid meet"
+         style="
+            background-image:url('data:image/png;base64,{bg_img}');
+            background-size:contain;
+            background-repeat:no-repeat;
+            background-position:center;
+            border-radius:20px;
+         ">
+        {''.join(svg_parts)}
+    </svg>
+    </div>
     """
 
-    if unlocked:
-        svg_parts.append(f'<a href="?level={level}">{cross}</a>')
-    else:
-        svg_parts.append(cross)
+    components.html(svg_html, height=800)
 
-# ---- FINAL SVG ----
-svg_html = f"""
-<div style="overflow-x:auto;">
-<svg viewBox="0 0 1400 760"
-     width="1400"
-     height="760"
-     preserveAspectRatio="xMidYMid meet"
-     style="
-        background-image:url('data:image/png;base64,{bg_img}');
-        background-size:contain;
-        background-repeat:no-repeat;
-        background-position:center;
-        border-radius:20px;
-     ">
-    {''.join(svg_parts)}
-</svg>
-</div>
-"""
+# =================================================
+# LEVEL VIEW
+# =================================================
+else:
+    st.subheader(f"❌ Level {st.session_state.current_level}")
 
-components.html(svg_html, height=800)
+    st.info(
+        f"Role: **{role}**\n\n"
+        f"This is the gameplay screen for **Level {st.session_state.current_level}**.\n\n"
+        f"(Scenario, choices, outcomes go here.)"
+    )
 
-# -------------------------------------------------
-# LEVEL PANEL
-# -------------------------------------------------
-st.divider()
-st.subheader(f"❌ Level {st.session_state.current_level}")
+    if st.button("⬅ Back to Map"):
+        st.session_state.view = "map"
 
-st.info(
-    f"Role: **{role}**\n\n"
-    f"Scenario for **Level {st.session_state.current_level}** goes here.\n\n"
-    f"(Decision-making UI comes next.)"
-)
-
-if st.button("✅ Complete Level"):
-    st.session_state.completed_levels.add(st.session_state.current_level + 1)
-    st.success("Level completed! New path unlocked 🎉")
+    if st.button("✅ Complete Level"):
+        st.session_state.completed_levels.add(st.session_state.current_level + 1)
+        st.success("Level completed! New level unlocked 🎉")
