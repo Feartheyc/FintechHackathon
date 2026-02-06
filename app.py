@@ -2,17 +2,17 @@ import streamlit as st
 import base64
 import streamlit.components.v1 as components
 import time
+from sidebar import render_sidebar
 
 # ==========================================
 # 1. APP CONFIGURATION (Fully Preserved)
-# 1. APP CONFIGURATION
 # ==========================================
 
 st.set_page_config(
     page_title="Financial Journey", 
     layout="wide",
     page_icon="🌏",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 def img_to_base64(path):
@@ -34,25 +34,24 @@ if "game" not in st.session_state:
 # ==========================================
 
 def play_narration(text):
-    """Additive feature: Detects language and uses the correct browser voice."""
+    """Additive feature: Detects language and uses the native browser Web Speech API."""
     if text:
         # Clean text for JavaScript
         clean_text = text.replace("'", "\\'").replace("\n", " ")
         
-        # Simple detection logic for Hindi/Marathi/etc.
-        # This checks if the text contains Devanagari characters
+        # Detection logic for Hindi/Marathi characters
         is_hindi = any("\u0900" <= char <= "\u097F" for char in text)
         lang_code = "hi-IN" if is_hindi else "en-GB"
 
         components.html(
             f"""
             <script>
-                window.parent.speechSynthesis.cancel();
+                window.parent.speechSynthesis.cancel(); // Stop current speech
                 var msg = new SpeechSynthesisUtterance('{clean_text}');
                 msg.lang = '{lang_code}';
                 msg.rate = 0.9;
                 
-                // Find a voice that matches the language code
+                // Find a voice matching the language code
                 var voices = window.parent.speechSynthesis.getVoices();
                 for(var i = 0; i < voices.length; i++) {{
                     if(voices[i].lang.indexOf('{lang_code}') !== -1) {{
@@ -60,7 +59,6 @@ def play_narration(text):
                         break;
                     }}
                 }}
-                
                 window.parent.speechSynthesis.speak(msg);
             </script>
             """,
@@ -69,7 +67,6 @@ def play_narration(text):
 
 # ==========================================
 # 3. ULTRA-MODERN UI CSS (Fully Preserved)
-# 2. ULTRA-MODERN UI CSS
 # ==========================================
 
 st.markdown("""
@@ -255,7 +252,6 @@ st.markdown("""
 
 # ==========================================
 # 4. ADVANCED LOGIC ENGINE (Fully Preserved)
-# 3. ADVANCED LOGIC ENGINE
 # ==========================================
 
 def init_game(persona):
@@ -263,15 +259,11 @@ def init_game(persona):
         "Student": {"cash": 6000, "savings": 2000, "loan": 0, "investments": 0, "stress": 25},
         "Farmer": {"cash": 10000, "savings": 5000, "loan": 0, "investments": 500000, "stress": 10},
         "Employee": {"cash": 50000, "savings": 100000, "loan": 0, "investments": 50000, "stress": 40},
-        # --- ADDITIVE: FOUNDER STATS ---
         "Founder": {"cash": 200000, "savings": 20000, "loan": 0, "investments": 0, "stress": 60}
     }
-    base = defaults.get(persona, defaults["Student"]) 
-    return {
-        "state": "MAP",
     base = defaults.get(persona, defaults["Student"])
     return {
-        "state": "MAP", # CHANGED: Start at MAP
+        "state": "MAP", 
         "persona": persona, "event_index": 0,
         "cash": base['cash'], "savings": base['savings'], "loan": base['loan'],
         "investments": base['investments'], "insurance": False,
@@ -281,6 +273,8 @@ def init_game(persona):
 
 def try_apply_effects(effects):
     p = st.session_state.game
+    
+    # --- BANKRUPTCY PROTECTION ---
     savings_deduction = effects.get("savings", 0)
     cash_deduction = effects.get("cash", 0)
 
@@ -294,6 +288,7 @@ def try_apply_effects(effects):
             if p["savings"] - remaining < 0:
                 return False, "❌ Insufficient capital!"
 
+    # --- APPLY EFFECTS ---
     if effects.get("insurance") is False: p["insurance"] = False
     elif effects.get("insurance") is True: p["insurance"] = True
 
@@ -313,8 +308,7 @@ def try_apply_effects(effects):
     return True, "✅ Decision Recorded"
 
 # ==========================================
-# 5. CONTENT DATABASE (Fully Preserved)
-# 4. CONTENT DATABASE
+# 5. CONTENT DATABASE (Full Restored)
 # ==========================================
 
 def c(text, effects, msg=None):
@@ -324,7 +318,7 @@ STATIC_CAMPAIGNS = {
     "Farmer": {
         0: { 
             "title": "Sowing Season", "npc": "Moneylender Seth", "avatar": "👹", 
-            "text": "रमेश! बैंक जाने की क्या ज़रूरत है? अभी 20,000 रुपये नकद ले लो। कोई कागजी कार्रवाई नहीं।", 
+            "text": "Ramesh! Why run to the bank? Take ₹20,000 cash now. No paperwork.", 
             "thought": "Bank takes days... but Seth's interest is deadly. The rain is coming soon.",
             "choices": [
                 c("Take Seth's Cash", {"cash": 20000, "loan": 20000, "add_flag": "predatory_loan"}, "Debt Trap: 50% Interest rate!"),
@@ -451,7 +445,6 @@ STATIC_CAMPAIGNS = {
             ]
         },
     },
-    # --- ADDITIVE: FOUNDER CAMPAIGN ---
     "Founder": {
         0: { "title": "The Idea", "npc": "Inner Voice", "avatar": "💡", "text": "You have a unicorn idea. Quit your job to pursue it?", "thought": "High risk, infinite reward.", "choices": [c("Quit Job", {"cash": -20000, "stress": 10, "confidence": 10}, "All In."), c("Side Hustle", {"stress": 20}, "Safe play.")]},
         1: { "title": "Co-Founder", "npc": "Tech Whiz", "avatar": "🧑‍💻", "text": "I can build the tech, but I want 50% equity.", "thought": "He's a genius but expensive.", "choices": [c("Agree", {"confidence": 10}, "Strong Team."), c("Hire Freelancer", {"cash": -30000}, "Kept Equity.")]},
@@ -542,7 +535,7 @@ def stud_intern(p):
 
 STUDENT_EVENTS = [stud_allowance, stud_insurance, stud_crypto, stud_exam, stud_phone, stud_intern]
 
-# --- ADAPTER ---
+# --- ADAPTER (Preserved) ---
 def get_event_data(persona, index):
     if persona == "Student":
         if index < len(STUDENT_EVENTS):
@@ -553,10 +546,10 @@ def get_event_data(persona, index):
         if index in campaign:
             raw = campaign[index]
             choices_dict = {}
-            for c_item in raw['choices']:
-                effect = c_item['effects'].copy()
-                effect['__msg'] = c_item['msg'] 
-                choices_dict[c_item['text']] = effect
+            for choice_item in raw['choices']:
+                effect = choice_item['effects'].copy()
+                effect['__msg'] = choice_item['msg'] 
+                choices_dict[choice_item['text']] = effect
             return {
                 "story": raw['text'], "choices": choices_dict,
                 "npc": raw['npc'], "avatar": raw['avatar'],
@@ -565,7 +558,7 @@ def get_event_data(persona, index):
     return None
 
 # ==========================================
-# 6. RENDER ENGINE (Visuals & Helpers - Fully Preserved)
+# 6. RENDER ENGINE & HELPERS (Fully Preserved)
 # ==========================================
 
 def get_visuals(story_text, event_data):
@@ -583,46 +576,96 @@ def format_effects(effects):
     if not changes: return ""
     return f" ({', '.join(changes)})"
 
-# ==========================================
-# 7. UI WRAPPERS (Preserved + Additive Multi-Language JS)
-# ==========================================
-
-def render_persona_selection():
-    st.markdown("<h1 style='text-align:center; font-size: 3rem;'>🌏 Arth-Sagar</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center; color:#94a3b8; margin-bottom: 40px;'>The Ultimate Financial Simulator</p>", unsafe_allow_html=True)
-    c1, c2, c3 = st.columns(3)
-    
-    # ADDITIVE: 4 Columns
-    c1, c2, c3, c4 = st.columns(4)
-    with c1:
-        if st.button("🚜 Play Farmer", use_container_width=True): 
-            st.session_state.game = init_game("Farmer"); st.rerun()
-    with c2:
-        if st.button("👔 Play Employee", use_container_width=True): 
-            st.session_state.game = init_game("Employee"); st.rerun()
-    with c3:
-        if st.button("🎓 Play Student", use_container_width=True): 
-            st.session_state.game = init_game("Student"); st.rerun()
-    with c4:
-        if st.button("🚀 Play Founder", use_container_width=True): 
-            st.session_state.game = init_game("Founder"); st.rerun()
-
-def render_map():
-    p = st.session_state.game
-    current_lvl = p['event_index']
-    
-    # HUD MINI for MAP
-    ins_icon = "🛡️ ACTIVE" if p['insurance'] else "❌ NONE"
-    st.markdown(f"""
+def render_hud_content(p):
+    """Reusable HUD content for both Map and Scene"""
+    ins_status = "✅ Active" if p['insurance'] else "❌ None"
+    return f"""
     <div class="hud-container">
         <div class="hud-item"><div class="hud-label">ROLE</div><div class="hud-value">{p['persona']}</div></div>
         <div class="hud-item"><div class="hud-label">CASH</div><div class="hud-value money-val">₹{p['cash']:,}</div></div>
         <div class="hud-item"><div class="hud-label">SAVINGS</div><div class="hud-value money-val">₹{p['savings']:,}</div></div>
         <div class="hud-item"><div class="hud-label">DEBT</div><div class="hud-value debt-val">₹{p['loan']:,}</div></div>
+        <div class="hud-item"><div class="hud-label">INVEST</div><div class="hud-value" style="color:#c084fc">₹{p['investments']:,}</div></div>
         <div class="hud-item"><div class="hud-label">STRESS</div><div class="hud-value stress-val">{p['stress']}%</div></div>
-        <div class="hud-item"><div class="hud-label">INSURANCE</div><div class="hud-value">{ins_icon}</div></div>
+        <div class="hud-item"><div class="hud-label">INSURANCE</div><div class="hud-value">{ins_status}</div></div>
     </div>
+    """
+
+# ==========================================
+# 7. UI WRAPPERS (Preserved + Additive Audio JS)
+# ==========================================
+
+def render_persona_selection():
+    st.markdown("<h1 style='text-align:center; font-size: 3rem; margin-bottom: 10px;'>🌏 Arth-Sagar</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; color:#94a3b8; margin-bottom: 50px; font-size: 1.1rem;'>Select your avatar to begin the simulation</p>", unsafe_allow_html=True)
+    
+    st.markdown("""
+    <style>
+    .char-card {
+        background-color: #1e293b;
+        border: 2px solid #334155;
+        border-radius: 15px;
+        padding: 20px;
+        text-align: center;
+        transition: transform 0.3s ease, border-color 0.3s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .char-card:hover {
+        transform: translateY(-5px);
+        border-color: #38bdf8;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    }
+    .char-img {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-bottom: 15px;
+        border: 3px solid #475569;
+        background: #0f172a;
+    }
+    .char-role {
+        color: #f8fafc;
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+    .char-desc {
+        color: #94a3b8;
+        font-size: 0.85rem;
+        margin-bottom: 20px;
+        line-height: 1.4;
+    }
+    </style>
     """, unsafe_allow_html=True)
+
+    c1, c2, c3, c4 = st.columns(4)
+    characters = [
+        {"col": c1, "role": "Farmer", "img": "https://cdn-icons-png.flaticon.com/512/4955/4955737.png", "desc": "Manage crops, weather risks, and loans.", "btn": "🚜 Select Farmer"},
+        {"col": c2, "role": "Employee", "img": "https://cdn-icons-png.flaticon.com/512/4825/4825038.png", "desc": "Stable salary, office politics, and corporate ladder.", "btn": "👔 Select Employee"},
+        {"col": c3, "role": "Student", "img": "https://cdn-icons-png.flaticon.com/512/5853/5853761.png", "desc": "Limited pocket money, peer pressure, and career choices.", "btn": "🎓 Select Student"},
+        {"col": c4, "role": "Founder", "img": "https://cdn-icons-png.flaticon.com/512/1995/1995669.png", "desc": "High risk, high stress, chasing unicorns and VC funding.", "btn": "🚀 Select Founder"}
+    ]
+
+    for char in characters:
+        with char["col"]:
+            st.markdown(f'<div class="char-card"><img src="{char["img"]}" class="char-img"><div class="char-role">{char["role"]}</div><div class="char-desc">{char["desc"]}</div></div>', unsafe_allow_html=True)
+            st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
+            if st.button(
+                char["btn"],
+                key=f"persona_{char['role']}",
+                use_container_width=True
+                ):
+                st.session_state.game = init_game(char["role"]); st.rerun()
+
+def render_map():
+    p = st.session_state.game
+    current_lvl = p['event_index']
+    st.markdown(render_hud_content(p), unsafe_allow_html=True)
 
     c1, c2 = st.columns([3, 1])
     with c1:
@@ -643,7 +686,7 @@ def render_map():
             svg_content += f"""<circle cx="{cx}" cy="{cy}" r="{radius}" fill="{color}" stroke="white" stroke-width="2">{anim}</circle>"""
 
         components.html(f"""
-            <style>body {{ margin: 0; overflow: hidden; }} #map-container {{ position: relative; width: 100%; height: 600px; background-image: url('data:image/png;base64,{MAP_IMG}'); background-size: cover; background-position: center; border-radius: 12px; }} svg {{ width: 100%; height: 100%; }}</style>
+            <style>body {{ margin: 0; overflow: hidden; }} #map-container {{ position: relative; width: 100%; height: 600px; background-color: #1e293b; background-image: url('data:image/png;base64,{MAP_IMG}'); background-size: cover; background-position: center; border-radius: 12px; }} svg {{ width: 100%; height: 100%; }}</style>
             <div id="map-container"><svg viewBox="0 0 800 600" preserveAspectRatio="none">{svg_content}</svg></div>
             """, height=620 )
 
@@ -654,48 +697,29 @@ def render_map():
             st.markdown(f"**{evt.get('title', 'Event')}**")
             st.info("Your journey continues...")
             if st.button("🚀 Enter Level", type="primary", use_container_width=True):
-                st.session_state.game['state'] = "PLAYING"
-                st.rerun()
+                st.session_state.game['state'] = "PLAYING"; st.rerun()
         else:
             st.success("Campaign Complete!")
-            if st.button("🏆 Finish", type="primary"):
-                st.session_state.game['state'] = "END"
-                st.rerun()
+            if st.button("🏆 Finish", type="primary"): st.session_state.game['state'] = "END"; st.rerun()
         st.markdown("---")
-        if st.button("⬅ Change Role"):
-            st.session_state.game['state'] = "INTRO"
-            st.rerun()
+        if st.button("⬅ Change Role"): st.session_state.game['state'] = "INTRO"; st.rerun()
 
 def render_scene():
-    """Main Game Scene (Additive multi-language speech trigger included)"""
+    """Main Game Scene (Includes Additive Native Browser Speech)"""
     p = st.session_state.game
     event_data = get_event_data(p['persona'], p['event_index'])
-    
-    if not event_data:
-        p['state'] = "MAP" # Go to map if done
-        st.rerun()
-        return
+    if not event_data: p['state'] = "MAP"; st.rerun(); return
 
-    # --- ADDITIVE CHANGE: TRIGGERS BROWSER NATIVE MULTI-LANGUAGE SPEECH ---
+    # --- ADDITIVE CHANGE: TRIGGERS BROWSER NATIVE SPEECH ---
     play_narration(event_data['story'])
 
+    render_sidebar(p)
+    
     avatar, npc_name = get_visuals(event_data['story'], event_data)
-    ins_icon = "🛡️ ACTIVE" if p['insurance'] else "❌ NONE"
-
     _, c2, _ = st.columns([1, 2, 1])
     with c2:
-        st.markdown(f"""
-        <div class="hud-container">
-            <div class="hud-item"><div class="hud-label">ROLE</div><div class="hud-value">{p['persona']}</div></div>
-            <div class="hud-item"><div class="hud-label">CASH</div><div class="hud-value money-val">₹{p['cash']:,}</div></div>
-            <div class="hud-item"><div class="hud-label">SAVINGS</div><div class="hud-value money-val">₹{p['savings']:,}</div></div>
-            <div class="hud-item"><div class="hud-label">DEBT</div><div class="hud-value debt-val">₹{p['loan']:,}</div></div>
-            <div class="hud-item"><div class="hud-label">STRESS</div><div class="hud-value stress-val">{p['stress']}%</div></div>
-            <div class="hud-item"><div class="hud-label">INSURANCE</div><div class="hud-value">{ins_icon}</div></div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown(f'<div class="scene-card">', unsafe_allow_html=True)
+        st.markdown(render_hud_content(p), unsafe_allow_html=True)
+        st.markdown('<div class="scene-card">', unsafe_allow_html=True)
         if p['last_feedback']:
             css = f"alert-{p['feedback_type']}"
             st.markdown(f"<div class='game-alert {css}'>{p['last_feedback']}</div>", unsafe_allow_html=True)
@@ -719,30 +743,18 @@ def render_scene():
                 with cols[i]:
                     preview_text = format_effects(effects)
                     if st.button(f"{choice_text} {preview_text}", key=f"btn_{p['event_index']}_{i}"):
-                        custom_msg = effects.pop('__msg', None)
+                        msg = effects.pop('__msg', None)
                         success, sys_msg = try_apply_effects(effects)
-                        p['last_feedback'] = custom_msg if success and custom_msg else sys_msg
-                        p['feedback_type'] = "good" if success else "bad"
-                        if success:
-                            p['event_index'] += 1
-                            p['history'].append(f"{choice_text}")
-                            p['state'] = "MAP"
-                            # ADDITIVE CHANGE: CONTINUOUS PLAY ENABLED (No go to map)
+                        p['last_feedback'], p['feedback_type'] = (msg or sys_msg), ("good" if success else "bad")
+                        if success: p['event_index'] += 1
                         st.rerun()
         elif "auto" in event_data:
             if st.button("Continue ➡️", type="primary"):
                 try_apply_effects(event_data["auto"])
-                p['last_feedback'] = "Event Processed"
-                p['event_index'] += 1
-                p['state'] = "MAP"
-                # ADDITIVE CHANGE: CONTINUOUS PLAY ENABLED
-                st.rerun()
+                p['event_index'] += 1; st.rerun()
         
         st.markdown("<br>", unsafe_allow_html=True)
-        # Additive: Manual Map Button
-        if st.button("🗺️ Pause & Check Map", use_container_width=True):
-            p['state'] = "MAP"
-            st.rerun()
+        if st.button("🗺️ Pause & Check Map", use_container_width=True): p['state'] = "MAP"; st.rerun()
 
 # ==========================================
 # 8. MAIN LOOP
@@ -751,7 +763,8 @@ def render_scene():
 state = st.session_state.game['state']
 if state == "INTRO": render_persona_selection()
 elif state == "MAP": render_map()
-elif state == "PLAYING": render_scene()
+elif state == "PLAYING": 
+    render_scene()
 elif state == "END":
     p = st.session_state.game
     nw = (p['cash'] + p['savings'] + p['investments']) - p['loan']
