@@ -3,7 +3,9 @@ import streamlit as st
 def c(text, effects, msg=None):
     return {"text": text, "effects": effects, "msg": msg}
 
-# --- ADD THIS GLOSSARY SECTION ---
+# ==========================================
+# RURAL GLOSSARY
+# ==========================================
 GLOSSARY = {
     "KCC": "Kisan Credit Card: Low interest loans for farmers.",
     "Hybrid": "High-yield seeds that need more water.",
@@ -21,10 +23,16 @@ GLOSSARY = {
     "Burn Rate": "Monthly cash spending speed.",
     "Runway": "Months left before money runs out.",
     "Pivot": "Changing business strategy.",
-    "IPO": "Selling shares to public market."
+    "IPO": "Selling shares to public market.",
+    "Organic": "Farming without chemicals, sells for higher price.",
+    "Cold Storage": "A giant fridge to keep crops fresh for months.",
+    "Compliance": "Following strict government rules and laws.",
+    "Freelance": "Working on your own for different clients."
 }
-# ---------------------------------
 
+# ==========================================
+# CAMPAIGNS (Added Levels 7 & 8)
+# ==========================================
 STATIC_CAMPAIGNS = {
     "Farmer": {
         0: { "title": "Sowing Season", "npc": "Moneylender Seth", "avatar": "👹", "text": "Ramesh! Why run to the bank? Take ₹20,000 cash now. No paperwork.", "thought": "Bank takes days... but Seth's interest is deadly. The rain is coming soon.", "choices": [c("Take Seth's Cash", {"cash": 20000, "loan": 20000, "add_flag": "predatory_loan"}, "Debt Trap: 50% Interest rate!"), c("Go to Bank (KCC)", {"cash": 20000, "loan": 20000, "confidence": 10}, "Safe Loan: 7% Interest.")] },
@@ -34,6 +42,9 @@ STATIC_CAMPAIGNS = {
         4: { "title": "Daughter's School", "npc": "Wife", "avatar": "👩", "text": "Lakshmi needs admission. The Private school is ₹15k, but the Govt school is free.", "thought": "I want her to have the life I never had.", "choices": [c("Private School", {"cash": -15000, "success": 20}, "Better future."), c("Govt School", {"success": 5}, "Saved money.")] },
         5: { "title": "Tractor", "npc": "Dealer", "avatar": "🚜", "text": "Why use bullocks? Buy a Tractor! I'll arrange a ₹5 Lakh loan instantly.", "thought": "A tractor would make me a king in the village... but the debt?", "choices": [c("Buy Tractor", {"loan": 500000, "stress": 20}, "Status symbol."), c("Rent when needed", {"cash": -5000}, "Smart choice.")] },
         6: { "title": "Sister's Wedding", "npc": "Family", "avatar": "🎉", "text": "The wedding must be grand! We need ₹2 Lakhs for the feast.", "thought": "If I don't spend, the village will talk. If I do, I lose my land.", "choices": [c("Sell Land", {"cash": 500000, "add_flag": "sold_land", "regret": 20}, "Asset lost."), c("Simple Wedding", {"cash": -50000}, "Social pressure ignored.")] },
+        # --- NEW LEVELS ---
+        7: { "title": "Cold Storage", "npc": "Cooperative", "avatar": "❄️", "text": "Prices are low now. Store your crop in Cold Storage for ₹5,000 and sell later?", "thought": "If I store it, I might get double the price in 3 months.", "choices": [c("Store Crop", {"cash": -5000, "investments": 60000}, "Smart Hold."), c("Sell Now", {"cash": 25000}, "Instant Cash.")] },
+        8: { "title": "Organic Farming", "npc": "Agri-Officer", "avatar": "🌿", "text": "Switch to Organic? It takes 2 years to certify, but produce sells for 3x price.", "thought": "Two years of low income... can I survive that?", "choices": [c("Go Organic", {"cash": -10000, "confidence": 20, "stress": 10}, "Future Ready."), c("Stick to Chemicals", {"cash": 5000}, "Safe Routine.")] }
     },
     "Employee": {
         0: { "title": "Job Offer", "npc": "HR", "avatar": "👔", "text": "Welcome aboard! We can structure your salary: High Cash in hand or Higher PF contribution?", "thought": "Cash buys things today. PF buys freedom later.", "choices": [c("High Cash", {"cash": 50000}, "Instant gratification."), c("High PF", {"cash": 40000, "savings": 10000}, "Retirement secured.")] },
@@ -43,6 +54,9 @@ STATIC_CAMPAIGNS = {
         4: { "title": "Medical Insurance", "npc": "Insurance Agent", "avatar": "🏥", "text": "Sir, one medical emergency can wipe your savings. Cover parents for just ₹25k?", "thought": "I'm young and healthy. Do I really need this expense?", "choices": [c("Buy Policy", {"cash": -25000, "insurance": True}, "Safety net."), c("Skip", {}, "Huge risk.")] },
         5: { "title": "Home Renovation", "npc": "Contractor", "avatar": "🔨", "text": "The kitchen looks old. Let's redo it completely for ₹3 Lakhs.", "thought": "It would look great, but I'd have to take a personal loan.", "choices": [c("Personal Loan", {"loan": 300000}, "High interest."), c("Delay", {"stress": 5}, "Save first.")] },
         6: { "title": "Layoff Rumors", "npc": "Colleague", "avatar": "🏢", "text": "Did you hear? They might fire 20% of the staff next month.", "thought": "Panic won't help. I should probably save cash and upskill.", "choices": [c("Up-skill Course", {"cash": -5000, "confidence": 10}, "Safe."), c("Ignore", {"stress": 20}, "Risky.")] },
+        # --- NEW LEVELS ---
+        7: { "title": "Side Business", "npc": "Spouse", "avatar": "☕", "text": "Let's open a small weekend cafe. We need ₹1 Lakh capital.", "thought": "It will eat our weekends, but second income is good.", "choices": [c("Start Business", {"cash": -100000, "investments": 5000}, "Entrepreneur."), c("Relax", {"stress": -5}, "Enjoy Life.")] },
+        8: { "title": "Promotion", "npc": "Boss", "avatar": "💼", "text": "We want to promote you to Manager. Salary +30%, but you work weekends.", "thought": "More money, but no life. Is it worth it?", "choices": [c("Accept", {"cash": 50000, "stress": 20}, "Career Growth."), c("Decline", {"confidence": 5, "stress": -10}, "Work-Life Balance.")] }
     },
     "Founder": {
         0: { "title": "The Idea", "npc": "Inner Voice", "avatar": "💡", "text": "You have a unicorn idea. Quit your job to pursue it?", "thought": "High risk, infinite reward.", "choices": [c("Quit Job", {"cash": -20000, "stress": 10, "confidence": 10}, "All In."), c("Side Hustle", {"stress": 20}, "Safe play.")]},
@@ -51,10 +65,14 @@ STATIC_CAMPAIGNS = {
         3: { "title": "Seed Round", "npc": "VC", "avatar": "💰", "text": "We offer ₹1 Crore for 20% equity.", "thought": "Fuel for the rocket ship.", "choices": [c("Take Money", {"cash": 10000000, "stress": -10}, "Funded!"), c("Bootstrap", {"confidence": 20, "stress": 20}, "Freedom.")]},
         4: { "title": "The Pivot", "npc": "Analytics", "avatar": "📊", "text": "Users hate feature A but love feature B. Pivot?", "thought": "Changing direction is costly.", "choices": [c("Pivot", {"cash": -50000, "confidence": 10}, "Adapt."), c("Stay Course", {"stress": 10}, "Stubborn.")]},
         5: { "title": "Cash Crunch", "npc": "CFO", "avatar": "📉", "text": "2 months of runway left.", "thought": "Do or die.", "choices": [c("Fire Sales Team", {"stress": 20, "regret": 10}, "Lean Ops."), c("Founder Salary Cut", {"confidence": 5}, "Lead by example.")]},
-        6: { "title": "The Exit", "npc": "Big Tech", "avatar": "🏢", "text": "Acquisition offer: ₹50 Crores.", "thought": "Generational wealth?", "choices": [c("Sell", {"cash": 50000000}, "Exit Strategy."), c("IPO", {"confidence": 30, "stress": 30}, "Legacy.")]}
+        6: { "title": "The Exit", "npc": "Big Tech", "avatar": "🏢", "text": "Acquisition offer: ₹50 Crores.", "thought": "Generational wealth?", "choices": [c("Sell", {"cash": 50000000}, "Exit Strategy."), c("IPO", {"confidence": 30, "stress": 30}, "Legacy.")]},
+        # --- NEW LEVELS ---
+        7: { "title": "Global Expansion", "npc": "Investor", "avatar": "🌍", "text": "Expand to USA? It will cost ₹2 Crores but potential is 10x.", "thought": "If we fail in the US, we lose everything.", "choices": [c("Go Global", {"cash": -20000000, "stress": 30}, "Big Risk."), c("Stay Domestic", {"cash": 5000000}, "Safe Growth.")] },
+        8: { "title": "Compliance Audit", "npc": "Lawyer", "avatar": "⚖️", "text": "We missed some taxes. Pay fine (₹10L) or Bribe (₹2L)?", "thought": "Bribing is cheap but dangerous. Fines hurt the balance sheet.", "choices": [c("Pay Fine", {"cash": -1000000, "confidence": 10}, "Honesty."), c("Bribe", {"cash": -200000, "stress": 20}, "Quick Fix.")] }
     }
 }
 
+# --- DYNAMIC PYTHON LOGIC CONTENT (STUDENT) ---
 def stud_allowance(p): return {"story": "Here is your monthly allowance, son. Try to make it last the whole month, okay?", "npc": "Dad", "avatar": "👨‍🦳", "thought": "It's barely enough... I need to budget this carefully.", "choices": {"Save most": {"cash": +1000, "savings": +3000, "confidence": +3}, "Spend freely": {"cash": -4000, "confidence": +2, "stress": +2}, "Split wisely": {"cash": +2500, "savings": +1500}}}
 def stud_insurance(p): return {"story": "Listen kid, I broke my leg playing football and the bill was huge. You really should get that student health insurance.", "npc": "Senior Student", "avatar": "🎓", "thought": "₹1200 is a lot of pizza money... but an accident would ruin me.", "choices": {"Buy insurance": ({"cash": -1200, "insurance": True, "confidence": +4} if p["cash"] >= 1200 else {"stress": +3}), "Ignore advice": {"regret": +3}}}
 def stud_exam(p): return {"story": "This is the final notice. Semester exam fees of ₹3000 are due immediately.", "npc": "Admin Office", "avatar": "🏫", "thought": "I totally forgot! Where do I get the money now?", "choices": {"Pay from Cash": {"cash": -3000, "stress": -2}, "Pay from Savings": {"savings": -3000, "stress": +1}, "Borrow": {"loan": +3000, "stress": +3}}}
@@ -66,7 +84,24 @@ def stud_intern(p):
     if p['confidence'] > 50: return {"story": "We were really impressed by your confidence during the interview. We'd like to offer you a paid internship!", "npc": "Recruiter", "avatar": "🤝", "thought": "Yes! All that hard work paid off!", "auto": {"cash": 10000, "confidence": 10}}
     return {"story": "You have good grades, but you seemed very unsure of yourself. We're going with another candidate.", "npc": "Recruiter", "avatar": "🤝", "thought": "I choked... I need to work on my confidence.", "auto": {"stress": 10}}
 
-STUDENT_EVENTS = [stud_allowance, stud_insurance, stud_crypto, stud_exam, stud_phone, stud_intern]
+# --- NEW STUDENT LEVELS (7 & 8) ---
+def stud_parttime(p):
+    return {
+        "story": "Hey, the coffee shop needs a weekend barista. Pays ₹4000, but you'll miss study time.",
+        "npc": "Friend", "avatar": "☕",
+        "thought": "Extra cash is good, but my grades might drop.",
+        "choices": {"Take Job": {"cash": 4000, "stress": 5}, "Study": {"confidence": 5}}
+    }
+
+def stud_project(p):
+    return {
+        "story": "Final Year Project: Build a real robot (₹5000 cost) or a software simulation (Free)?",
+        "npc": "Professor", "avatar": "🤖",
+        "thought": "Real robot gets better marks and job offers.",
+        "choices": {"Build Robot": {"cash": -5000, "confidence": 15}, "Simulation": {"confidence": 2}}
+    }
+
+STUDENT_EVENTS = [stud_allowance, stud_insurance, stud_crypto, stud_exam, stud_phone, stud_intern, stud_parttime, stud_project]
 
 def get_event_data(persona, index):
     if persona == "Student":
