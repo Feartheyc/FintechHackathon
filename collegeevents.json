@@ -1,0 +1,127 @@
+[
+  {
+    "id": "CS_001",
+    "month": 1,
+    "title": "Pocket Money Delay",
+    "story": "Your parents inform you that this month's pocket money will be delayed by 10 days. Your hostel rent is due soon.",
+    "choices": [
+      {
+        "id": "A",
+        "text": "Use emergency savings",
+        "effects": { "cash": -2000, "stress": -5, "confidence": 5 }
+      },
+      {
+        "id": "B",
+        "text": "Borrow from a friend",
+        "effects": { "loan": 2000, "stress": 5 },
+        "flags": ["friend_debt"]
+      },
+      {
+        "id": "C",
+        "text": "Delay rent payment",
+        "effects": { "stress": 15, "confidence": -10 },
+        "future_event": "landlord_warning"
+      }
+    ]
+  },
+
+  {
+    "id": "CS_002",
+    "month": 2,
+    "title": "Subscription Drain",
+    "story": "You notice multiple auto-debits for OTT, music, and food apps. Together they cost ₹999 per month.",
+    "choices": [
+      {
+        "id": "A",
+        "text": "Cancel unused subscriptions",
+        "effects": { "monthly_expense": -400, "confidence": 5 }
+      },
+      {
+        "id": "B",
+        "text": "Ignore, it's a small amount",
+        "effects": { "cash": -999, "stress": 5 },
+        "flags": ["passive_spending"]
+      },
+      {
+        "id": "C",
+        "text": "Ask parents for extra money",
+        "effects": { "cash": 1000, "confidence": -10 }
+      }
+    ]
+  },
+
+  {
+    "id": "CS_003",
+    "month": 3,
+    "title": "Friends’ Trip Pressure",
+    "story": "Your friends plan a weekend trip costing ₹3,500 per person and expect you to join.",
+    "choices": [
+      {
+        "id": "A",
+        "text": "Go on the trip",
+        "effects": { "cash": -3500, "stress": 5, "happiness": 10 }
+      },
+      {
+        "id": "B",
+        "text": "Suggest a cheaper alternative",
+        "effects": { "cash": -800, "confidence": 10 }
+      },
+      {
+        "id": "C",
+        "text": "Say no",
+        "effects": { "confidence": 5 },
+        "flags": ["social_discomfort"]
+      }
+    ]
+  },
+
+  {
+    "id": "CS_004",
+    "month": 4,
+    "title": "Online Sale Temptation",
+    "story": "A limited-time sale offers a jacket you like at 60% off. EMI option is available.",
+    "choices": [
+      {
+        "id": "A",
+        "text": "Buy using EMI",
+        "effects": { "emi": 1200, "stress": 5 },
+        "flags": ["emi_commitment"]
+      },
+      {
+        "id": "B",
+        "text": "Wait and save",
+        "effects": { "confidence": 10 }
+      },
+      {
+        "id": "C",
+        "text": "Buy a cheaper alternative",
+        "effects": { "cash": -600 }
+      }
+    ]
+  },
+
+  {
+    "id": "CS_005",
+    "month": 6,
+    "title": "Sudden Illness",
+    "story": "You fall sick during exams. Tests and medicines cost ₹2,500. You have no insurance.",
+    "choices": [
+      {
+        "id": "A",
+        "text": "Pay from savings",
+        "effects": { "cash": -2500, "stress": -5 }
+      },
+      {
+        "id": "B",
+        "text": "Skip tests",
+        "effects": { "cash": -500 },
+        "future_event": "health_complication"
+      },
+      {
+        "id": "C",
+        "text": "Ask parents for help",
+        "effects": { "cash": 2500, "confidence": -10 }
+      }
+    ]
+  }
+]
