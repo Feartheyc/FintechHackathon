@@ -2,184 +2,154 @@ import streamlit as st
 import base64
 import streamlit.components.v1 as components
 
-# -------------------------------------------------
-# PAGE CONFIG
-# -------------------------------------------------
 st.set_page_config(page_title="Financial Journey", layout="wide")
 
-# -------------------------------------------------
-# SESSION STATE
-# -------------------------------------------------
-if "completed_levels" not in st.session_state:
-    st.session_state.completed_levels = {1}
-
-if "current_level" not in st.session_state:
-    st.session_state.current_level = 1
-
-if "view" not in st.session_state:
-    st.session_state.view = "map"   # "map" or "level"
-
-# -------------------------------------------------
-# HANDLE LEVEL CLICK FROM SVG (QUERY PARAMS)
-# -------------------------------------------------
-query = st.query_params
-if "level" in query:
-    try:
-        lvl = int(query["level"])
-        if lvl in st.session_state.completed_levels:
-            st.session_state.current_level = lvl
-            st.session_state.view = "level"   # 🔥 TRANSITION
-            st.query_params.clear()           # 🔥 CLEAN URL
-    except:
-        pass
-
-# -------------------------------------------------
-# UTIL
-# -------------------------------------------------
 def img_to_base64(path):
     with open(path, "rb") as f:
         return base64.b64encode(f.read()).decode()
 
-# -------------------------------------------------
-# BACKGROUNDS
-# -------------------------------------------------
-BG_MAPS = {
-    "🌾 Farmer": img_to_base64("assets/map_farmer.png"),
-    "🏪 Small Business Owner": img_to_base64("assets/map_business.png"),
-    "🎓 College Student": img_to_base64("assets/map_student.png"),
-}
+# Use ONE background for now (you can swap per role later)
+BG_IMG = img_to_base64("assets/map_farmer.png")
 
-# -------------------------------------------------
-# MAP DATA
-# -------------------------------------------------
-MAPS = {
-    "🌾 Farmer": {
-        "nodes": {
-            1: (140, 440),
-            2: (360, 280),
-            3: (620, 360),
-            4: (900, 260),
-            5: (1180, 400),
-        },
-        "paths": [(1, 2), (2, 3), (3, 4), (3, 5)],
-    },
-    "🏪 Small Business Owner": {
-        "nodes": {
-            1: (140, 300),
-            2: (360, 440),
-            3: (620, 260),
-            4: (860, 420),
-            5: (1120, 300),
-        },
-        "paths": [(1, 2), (2, 3), (3, 4), (4, 5)],
-    },
-    "🎓 College Student": {
-        "nodes": {
-            1: (160, 460),
-            2: (380, 300),
-            3: (620, 460),
-            4: (860, 300),
-            5: (1100, 460),
-        },
-        "paths": [(1, 2), (2, 3), (3, 4), (4, 5)],
-    },
-}
-
-# -------------------------------------------------
-# HEADER
-# -------------------------------------------------
 st.title("🗺️ Financial Journey")
+st.write("Choose your role (UI only for now)")
 
-role = st.radio(
-    "Choose your role",
+st.radio(
+    "Role",
     ["🌾 Farmer", "🏪 Small Business Owner", "🎓 College Student"],
     horizontal=True,
 )
 
-st.divider()
+components.html(
+f"""
+<style>
+body {{
+  margin: 0;
+}}
 
-# =================================================
-# MAP VIEW
-# =================================================
-if st.session_state.view == "map":
+#game {{
+  position: relative;
+  width: 100%;
+  max-width: 1400px;
+  margin: auto;
+}}
 
-    nodes = MAPS[role]["nodes"]
-    paths = MAPS[role]["paths"]
-    bg_img = BG_MAPS[role]
+svg {{
+  width: 100%;
+  height: auto;
+  border-radius: 20px;
+}}
 
-    svg_parts = []
+.cross {{
+  stroke: #ff5252;
+  stroke-width: 4;
+  cursor: pointer;
+}}
 
-    # ---- PATHS ----
-    for start, end in paths:
-        if start in st.session_state.completed_levels:
-            x1, y1 = nodes[start]
-            x2, y2 = nodes[end]
+.cross.locked {{
+  stroke: #666;
+  cursor: not-allowed;
+}}
 
-            svg_parts.append(
-                f"""
-                <path d="M{x1} {y1}
-                         C {(x1+x2)//2} {y1-160},
-                           {(x1+x2)//2} {y2+160},
-                           {x2} {y2}"
-                      stroke="#ffd966"
-                      stroke-width="6"
-                      fill="none"
-                      stroke-linecap="round"/>
-                """
-            )
+#modal {{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}}
 
-    # ---- CROSSES ----
-    for level, (x, y) in nodes.items():
-        unlocked = level in st.session_state.completed_levels
-        color = "#ff5252" if unlocked else "#666"
+#modal-content {{
+  background: #111;
+  color: white;
+  padding: 30px;
+  border-radius: 16px;
+  width: 420px;
+  animation: pop 0.25s ease-out;
+}}
 
-        cross = f"""
-            <line x1="{x-14}" y1="{y-14}" x2="{x+14}" y2="{y+14}"
-                  stroke="{color}" stroke-width="4" stroke-linecap="round"/>
-            <line x1="{x+14}" y1="{y-14}" x2="{x-14}" y2="{y+14}"
-                  stroke="{color}" stroke-width="4" stroke-linecap="round"/>
-        """
+@keyframes pop {{
+  from {{ transform: scale(0.9); opacity: 0; }}
+  to {{ transform: scale(1); opacity: 1; }}
+}}
 
-        if unlocked:
-            svg_parts.append(f'<a href="?level={level}">{cross}</a>')
-        else:
-            svg_parts.append(cross)
+button {{
+  margin-top: 16px;
+  padding: 10px 14px;
+  background: #ff5252;
+  border: none;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+}}
+</style>
 
-    svg_html = f"""
-    <div style="overflow-x:auto;">
-    <svg viewBox="0 0 1400 760"
-         width="1400"
-         height="760"
-         preserveAspectRatio="xMidYMid meet"
-         style="
-            background-image:url('data:image/png;base64,{bg_img}');
-            background-size:contain;
-            background-repeat:no-repeat;
-            background-position:center;
-            border-radius:20px;
-         ">
-        {''.join(svg_parts)}
-    </svg>
-    </div>
-    """
+<div id="game">
 
-    components.html(svg_html, height=800)
+<svg viewBox="0 0 1400 760"
+     style="
+        background-image:url('data:image/png;base64,{BG_IMG}');
+        background-size:contain;
+        background-repeat:no-repeat;
+        background-position:center;
+     ">
 
-# =================================================
-# LEVEL VIEW
-# =================================================
-else:
-    st.subheader(f"❌ Level {st.session_state.current_level}")
+  <!-- PATHS -->
+  <path d="M140 440 C 250 280, 300 420, 360 280"
+        stroke="#ffd966" stroke-width="6" fill="none" />
+  <path d="M360 280 C 500 200, 560 420, 620 360"
+        stroke="#ffd966" stroke-width="6" fill="none" />
+  <path d="M620 360 C 760 200, 820 420, 900 260"
+        stroke="#ffd966" stroke-width="6" fill="none" />
 
-    st.info(
-        f"Role: **{role}**\n\n"
-        f"This is the gameplay screen for **Level {st.session_state.current_level}**.\n\n"
-        f"(Scenario, choices, outcomes go here.)"
-    )
+  <!-- LEVEL 1 -->
+  <g onclick="openLevel(1)">
+    <line x1="126" y1="426" x2="154" y2="454" class="cross"/>
+    <line x1="154" y1="426" x2="126" y2="454" class="cross"/>
+  </g>
 
-    if st.button("⬅ Back to Map"):
-        st.session_state.view = "map"
+  <!-- LEVEL 2 -->
+  <g onclick="openLevel(2)">
+    <line x1="346" y1="266" x2="374" y2="294" class="cross"/>
+    <line x1="374" y1="266" x2="346" y2="294" class="cross"/>
+  </g>
 
-    if st.button("✅ Complete Level"):
-        st.session_state.completed_levels.add(st.session_state.current_level + 1)
-        st.success("Level completed! New level unlocked 🎉")
+  <!-- LEVEL 3 -->
+  <g onclick="openLevel(3)">
+    <line x1="606" y1="346" x2="634" y2="374" class="cross"/>
+    <line x1="634" y1="346" x2="606" y2="374" class="cross"/>
+  </g>
+
+</svg>
+</div>
+
+<!-- MODAL -->
+<div id="modal">
+  <div id="modal-content">
+    <h2 id="modal-title"></h2>
+    <p>This is where gameplay UI will go.</p>
+    <button onclick="closeModal()">Close</button>
+  </div>
+</div>
+
+<script>
+let completedLevels = [1];
+
+function openLevel(level) {{
+  if (!completedLevels.includes(level)) {{
+    alert("Level locked");
+    return;
+  }}
+  document.getElementById("modal-title").innerText = "Level " + level;
+  document.getElementById("modal").style.display = "flex";
+}}
+
+function closeModal() {{
+  document.getElementById("modal").style.display = "none";
+}}
+</script>
+""",
+height=820,
+)
