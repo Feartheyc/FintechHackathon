@@ -5,6 +5,7 @@ from utils import img_to_base64, play_narration, render_interactive_dialogue
 from engine import init_game, try_apply_effects
 from content import get_event_data
 from config import apply_custom_css
+from leaderboard import render_leaderboard_ui
 
 # ==========================================
 # 1. APP CONFIGURATION
@@ -139,9 +140,16 @@ state = st.session_state.game['state']
 if state == "INTRO": render_persona_selection()
 elif state == "MAP": render_map()
 elif state == "PLAYING": render_scene()
-elif state == "END":
+elif state == "END":    
     p = st.session_state.game
     nw = (p['cash'] + p['savings'] + p['investments']) - p['loan']
+    
     st.balloons()
     st.markdown(f"<div style='text-align:center; padding:40px; background: rgba(15, 23, 42, 0.8); border-radius:20px; border: 1px solid #334155; margin-top: 50px;'><h1>Journey Complete</h1><h2>Net Worth: ₹{nw:,}</h2></div>", unsafe_allow_html=True)
-    if st.button("↺ Restart"): st.session_state.game = {"state": "INTRO"}; st.rerun()
+    
+    # Render leaderboard UI
+    render_leaderboard_ui(final_score=nw)
+    
+    if st.button("↺ Restart"): 
+        st.session_state.game = {"state": "INTRO"}
+        st.rerun()
