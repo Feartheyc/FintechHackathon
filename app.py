@@ -36,9 +36,13 @@ def img_to_base64(path):
         return base64.b64encode(f.read()).decode()
 
 # -------------------------------------------------
-# LOAD ASSETS
+# LOAD ROLE-SPECIFIC BACKGROUNDS
 # -------------------------------------------------
-BG_IMG = img_to_base64("assets/map_bg.png")
+BG_MAPS = {
+    "🌾 Farmer": img_to_base64("assets/map_farmer.png"),
+    "🏪 Small Business Owner": img_to_base64("assets/map_business.png"),
+    "🎓 College Student": img_to_base64("assets/map_student.png"),
+}
 
 # -------------------------------------------------
 # ROLE-BASED MAP DATA
@@ -46,19 +50,19 @@ BG_IMG = img_to_base64("assets/map_bg.png")
 MAPS = {
     "🌾 Farmer": {
         "nodes": {
-            1: (140, 420),
-            2: (360, 260),
-            3: (620, 340),
-            4: (900, 240),
-            5: (1180, 380),
+            1: (140, 440),
+            2: (360, 280),
+            3: (620, 360),
+            4: (900, 260),
+            5: (1180, 400),
         },
         "paths": [(1, 2), (2, 3), (3, 4), (3, 5)],
     },
     "🏪 Small Business Owner": {
         "nodes": {
             1: (140, 300),
-            2: (360, 420),
-            3: (600, 260),
+            2: (360, 440),
+            3: (620, 260),
             4: (860, 420),
             5: (1120, 300),
         },
@@ -66,11 +70,11 @@ MAPS = {
     },
     "🎓 College Student": {
         "nodes": {
-            1: (160, 440),
+            1: (160, 460),
             2: (380, 300),
-            3: (620, 440),
+            3: (620, 460),
             4: (860, 300),
-            5: (1100, 440),
+            5: (1100, 460),
         },
         "paths": [(1, 2), (2, 3), (3, 4), (4, 5)],
     },
@@ -90,15 +94,15 @@ role = st.radio(
 st.divider()
 
 # -------------------------------------------------
-# BUILD MAP
+# BUILD MAP FOR SELECTED ROLE
 # -------------------------------------------------
-role_map = MAPS[role]
-nodes = role_map["nodes"]
-paths = role_map["paths"]
+nodes = MAPS[role]["nodes"]
+paths = MAPS[role]["paths"]
+bg_img = BG_MAPS[role]
 
 svg_parts = []
 
-# ---- PATHS (CURVED, ORGANIC) ----
+# ---- PATHS ----
 for start, end in paths:
     if start in st.session_state.completed_levels:
         x1, y1 = nodes[start]
@@ -117,41 +121,32 @@ for start, end in paths:
             """
         )
 
-# ---- LEVEL CROSSES (CLICKABLE) ----
+# ---- LEVEL CROSSES ----
 for level, (x, y) in nodes.items():
     unlocked = level in st.session_state.completed_levels
     color = "#ff5252" if unlocked else "#666"
 
-    if unlocked:
-        svg_parts.append(
-            f"""
-            <a href="?level={level}">
-                <line x1="{x-14}" y1="{y-14}" x2="{x+14}" y2="{y+14}"
-                      stroke="{color}" stroke-width="4" stroke-linecap="round"/>
-                <line x1="{x+14}" y1="{y-14}" x2="{x-14}" y2="{y+14}"
-                      stroke="{color}" stroke-width="4" stroke-linecap="round"/>
-            </a>
-            """
-        )
-    else:
-        svg_parts.append(
-            f"""
-            <line x1="{x-14}" y1="{y-14}" x2="{x+14}" y2="{y+14}"
-                  stroke="{color}" stroke-width="4" stroke-linecap="round"/>
-            <line x1="{x+14}" y1="{y-14}" x2="{x-14}" y2="{y+14}"
-                  stroke="{color}" stroke-width="4" stroke-linecap="round"/>
-            """
-        )
+    cross = f"""
+        <line x1="{x-14}" y1="{y-14}" x2="{x+14}" y2="{y+14}"
+              stroke="{color}" stroke-width="4" stroke-linecap="round"/>
+        <line x1="{x+14}" y1="{y-14}" x2="{x-14}" y2="{y+14}"
+              stroke="{color}" stroke-width="4" stroke-linecap="round"/>
+    """
 
-# ---- FINAL SVG (FIXED SCALING, NO CROPPING) ----
+    if unlocked:
+        svg_parts.append(f'<a href="?level={level}">{cross}</a>')
+    else:
+        svg_parts.append(cross)
+
+# ---- FINAL SVG ----
 svg_html = f"""
 <div style="overflow-x:auto;">
-<svg viewBox="0 0 1400 700"
+<svg viewBox="0 0 1400 760"
      width="1400"
-     height="700"
+     height="760"
      preserveAspectRatio="xMidYMid meet"
      style="
-        background-image:url('data:image/png;base64,{BG_IMG}');
+        background-image:url('data:image/png;base64,{bg_img}');
         background-size:contain;
         background-repeat:no-repeat;
         background-position:center;
@@ -162,18 +157,18 @@ svg_html = f"""
 </div>
 """
 
-components.html(svg_html, height=750)
+components.html(svg_html, height=800)
 
 # -------------------------------------------------
-# LEVEL PANEL (NO BUTTON SELECTORS)
+# LEVEL PANEL
 # -------------------------------------------------
 st.divider()
 st.subheader(f"❌ Level {st.session_state.current_level}")
 
 st.info(
     f"Role: **{role}**\n\n"
-    f"This is where the scenario for **Level {st.session_state.current_level}** appears.\n\n"
-    f"(Choices, outcomes, learning logic come next.)"
+    f"Scenario for **Level {st.session_state.current_level}** goes here.\n\n"
+    f"(Decision-making UI comes next.)"
 )
 
 if st.button("✅ Complete Level"):
