@@ -10,7 +10,8 @@ from config import apply_custom_css
 # 1. APP CONFIGURATION
 # ==========================================
 st.set_page_config(page_title="Financial Journey", layout="wide", page_icon="🌏", initial_sidebar_state="expanded")
-MAP_IMG = img_to_base64("assets/map_student.png")
+
+# Initialize Session State
 if "game" not in st.session_state: st.session_state.game = {"state": "INTRO"}
 
 # APPLY CSS
@@ -132,15 +133,51 @@ def render_persona_selection():
 def render_map():
     p = st.session_state.game
     current_lvl = p['event_index']
+    
     st.markdown(render_hud_content(p), unsafe_allow_html=True)
+    
     c1, c2 = st.columns([3, 1])
     with c1:
+        # --- DYNAMIC MAP IMAGE LOGIC ---
+        persona_map_files = {
+            "Farmer": "assets/map_farmer.png",
+            "Student": "assets/map_student.png",
+            "Employee": "assets/map_business.png",
+            "Founder": "assets/map_startup.png"
+        }
+        
+        # Get the specific map for the current persona, fallback to default level_map if missing
+        target_map_file = persona_map_files.get(p['persona'], "assets/level_map.png")
+        current_map_img = img_to_base64(target_map_file)
+        
+        # If the specific map didn't load (empty base64), fallback to generic level_map.png
+        if not current_map_img:
+            current_map_img = img_to_base64("assets/level_map.png")
+
+        # SVG Path Logic
         path = [(10, 80), (20, 70), (30, 75), (40, 60), (50, 50), (60, 45), (70, 55), (80, 40), (90, 30)]
         svg = f'<polyline points="{" ".join([f"{x*8},{y*6}" for x,y in path])}" fill="none" stroke="#ffd966" stroke-width="6" stroke-dasharray="10,5"/>'
         for idx, (bx, by) in enumerate(path):
             color = "#4ade80" if idx < current_lvl else ("#ff5252" if idx == current_lvl else "#64748b")
             svg += f'<circle cx="{bx*8}" cy="{by*6}" r="{15 if idx==current_lvl else 10}" fill="{color}" stroke="white" stroke-width="2"><animate attributeName="r" values="15;18;15" dur="1.5s" repeatCount="indefinite" /></circle>' if idx == current_lvl else f'<circle cx="{bx*8}" cy="{by*6}" r="10" fill="{color}" stroke="white" stroke-width="2"></circle>'
-        components.html(f"<style>body {{ margin: 0; overflow: hidden; }} #map-container {{ width: 100%; height: 600px; background-image: url('data:image/png;base64,{MAP_IMG}'); background-size: cover; border-radius: 12px; }}</style><div id='map-container'><svg viewBox='0 0 800 600' preserveAspectRatio='none'>{svg}</svg></div>", height=620)
+        
+        # Inject the dynamic 'current_map_img' into the CSS
+        components.html(f"""
+            <style>
+                body {{ margin: 0; overflow: hidden; }} 
+                #map-container {{ 
+                    width: 100%; height: 600px; 
+                    background-image: url('data:image/png;base64,{current_map_img}'); 
+                    background-size: cover; 
+                    background-position: center;
+                    border-radius: 12px; 
+                }}
+            </style>
+            <div id='map-container'>
+                <svg viewBox='0 0 800 600' preserveAspectRatio='none'>{svg}</svg>
+            </div>
+            """, height=620)
+            
     with c2:
         st.markdown(f"### Level {current_lvl + 1}")
         evt = get_event_data(p['persona'], current_lvl)
@@ -173,12 +210,11 @@ def render_scene():
         if "thought" in evt: st.markdown(f'<div class="thought-container"><div class="thought-bubble">💭 {evt["thought"]}</div></div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
         
-        # --- NEW: FINANCIAL ADVISOR SECTION ---
-        # This expander provides specific advice for the current situation
+        # --- FINANCIAL ADVISOR SECTION ---
         if "advisor" in evt:
             with st.expander("💡 Ask Financial Advisor"):
                 st.markdown(f"**Expert Recommendation:**\n\n{evt['advisor']}")
-        # -------------------------------------
+        # ---------------------------------
 
         if "choices" in evt:
             cols = st.columns(len(evt["choices"]))
