@@ -1,212 +1,181 @@
 import streamlit as st
+import base64
+import streamlit.components.v1 as components
 
+# -------------------------------------------------
+# PAGE CONFIG
+# -------------------------------------------------
 st.set_page_config(page_title="Financial Journey", layout="wide")
-if "current_level" not in st.session_state:
-    st.session_state.current_level = 1
 
+# -------------------------------------------------
+# SESSION STATE
+# -------------------------------------------------
 if "completed_levels" not in st.session_state:
     st.session_state.completed_levels = {1}
 
+if "current_level" not in st.session_state:
+    st.session_state.current_level = 1
 
-# ------------------ GLOBAL STYLES ------------------
-st.markdown(
-    """
-    <style>
-    body {
-        background-color: #0f1117;
-    }
+# -------------------------------------------------
+# HANDLE LEVEL CLICK FROM SVG (QUERY PARAMS)
+# -------------------------------------------------
+query = st.query_params
+if "level" in query:
+    try:
+        lvl = int(query["level"])
+        if lvl in st.session_state.completed_levels:
+            st.session_state.current_level = lvl
+    except:
+        pass
 
-    .map-container {
-        position: relative;
-        width: 1600px;
-        height: 600px;
-        background-color: #0f1117;
-        border-radius: 12px;
-        padding: 40px;
-    }
+# -------------------------------------------------
+# UTIL: IMAGE TO BASE64
+# -------------------------------------------------
+def img_to_base64(path):
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
 
-    .node {
-        position: absolute;
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        background-color: #1f77ff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: bold;
-        cursor: pointer;
-        box-shadow: 0 0 10px rgba(31,119,255,0.6);
-    }
+# -------------------------------------------------
+# LOAD ASSETS
+# -------------------------------------------------
+BG_IMG = img_to_base64("assets/map_bg.png")
 
-    .node.locked {
-        background-color: #555;
-        box-shadow: none;
-        cursor: not-allowed;
-    }
+# -------------------------------------------------
+# ROLE-BASED MAP DATA
+# -------------------------------------------------
+MAPS = {
+    "🌾 Farmer": {
+        "nodes": {
+            1: (140, 420),
+            2: (360, 260),
+            3: (620, 340),
+            4: (900, 240),
+            5: (1180, 380),
+        },
+        "paths": [(1, 2), (2, 3), (3, 4), (3, 5)],
+    },
+    "🏪 Small Business Owner": {
+        "nodes": {
+            1: (140, 300),
+            2: (360, 420),
+            3: (600, 260),
+            4: (860, 420),
+            5: (1120, 300),
+        },
+        "paths": [(1, 2), (2, 3), (3, 4), (4, 5)],
+    },
+    "🎓 College Student": {
+        "nodes": {
+            1: (160, 440),
+            2: (380, 300),
+            3: (620, 440),
+            4: (860, 300),
+            5: (1100, 440),
+        },
+        "paths": [(1, 2), (2, 3), (3, 4), (4, 5)],
+    },
+}
 
-    .path {
-        position: absolute;
-        height: 4px;
-        background-color: #1f77ff;
-        opacity: 0.6;
-        transform-origin: left center;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+# -------------------------------------------------
+# UI HEADER
+# -------------------------------------------------
+st.title("🗺️ Financial Journey")
 
-# ------------------ TITLE ------------------
-st.title("🗺️ Financial Journey Map")
-
-# ------------------ ROLE SELECTION ------------------
 role = st.radio(
     "Choose your role",
     ["🌾 Farmer", "🏪 Small Business Owner", "🎓 College Student"],
-    horizontal=True
+    horizontal=True,
 )
 
 st.divider()
 
-#--------Roles-----------------
-
-MAPS = {
-    "🌾 Farmer": {
-        "nodes": {
-            1: (120, 320),
-            2: (360, 200),
-            3: (620, 260),
-            4: (880, 180),
-            5: (1140, 300),
-        },
-        "paths": [
-            (1, 2),
-            (2, 3),
-            (3, 4),
-            (3, 5),  # branch
-        ],
-    },
-
-    "🏪 Small Business Owner": {
-        "nodes": {
-            1: (120, 260),
-            2: (320, 340),
-            3: (560, 220),
-            4: (800, 340),
-            5: (1040, 240),
-        },
-        "paths": [
-            (1, 2),
-            (2, 3),
-            (3, 4),
-            (4, 5),
-        ],
-    },
-
-    "🎓 College Student": {
-        "nodes": {
-            1: (140, 360),
-            2: (360, 260),
-            3: (600, 360),
-            4: (840, 260),
-            5: (1080, 360),
-        },
-        "paths": [
-            (1, 2),
-            (2, 3),
-            (3, 4),
-            (4, 5),
-        ],
-    },
-}
-
-
-# ------------------ MAP ------------------
+# -------------------------------------------------
+# BUILD MAP
+# -------------------------------------------------
 role_map = MAPS[role]
 nodes = role_map["nodes"]
 paths = role_map["paths"]
 
-svg_elements = []
+svg_parts = []
 
-# --- Paths ---
+# ---- PATHS (CURVED, ORGANIC) ----
 for start, end in paths:
-    x1, y1 = nodes[start]
-    x2, y2 = nodes[end]
+    if start in st.session_state.completed_levels:
+        x1, y1 = nodes[start]
+        x2, y2 = nodes[end]
 
-    unlocked = start in st.session_state.completed_levels
+        svg_parts.append(
+            f"""
+            <path d="M{x1} {y1}
+                     C {(x1+x2)//2} {y1-160},
+                       {(x1+x2)//2} {y2+160},
+                       {x2} {y2}"
+                  stroke="#ffd966"
+                  stroke-width="6"
+                  fill="none"
+                  stroke-linecap="round"/>
+            """
+        )
 
-    color = "#4da3ff" if unlocked else "#555"
-
-    svg_elements.append(f"""
-        <path d="M{x1} {y1} C {(x1+x2)//2} {y1-120}, {(x1+x2)//2} {y2+120}, {x2} {y2}"
-              stroke="{color}"
-              stroke-width="4"
-              fill="none"
-              stroke-linecap="round"
-              stroke-dasharray="400"
-              stroke-dashoffset="{0 if unlocked else 400}">
-            <animate attributeName="stroke-dashoffset"
-                     from="400" to="0"
-                     dur="1.2s"
-                     fill="freeze"
-                     begin="0s" />
-        </path>
-    """)
-
-# --- Nodes ---
+# ---- LEVEL CROSSES (CLICKABLE) ----
 for level, (x, y) in nodes.items():
     unlocked = level in st.session_state.completed_levels
-    fill = "#1f77ff" if unlocked else "#555"
+    color = "#ff5252" if unlocked else "#666"
 
-    svg_elements.append(f"""
-        <circle cx="{x}" cy="{y}" r="30" fill="{fill}"/>
-        <text x="{x}" y="{y+5}" text-anchor="middle"
-              fill="white" font-size="16" font-weight="bold">
-            {level}
-        </text>
-    """)
+    if unlocked:
+        svg_parts.append(
+            f"""
+            <a href="?level={level}">
+                <line x1="{x-14}" y1="{y-14}" x2="{x+14}" y2="{y+14}"
+                      stroke="{color}" stroke-width="4" stroke-linecap="round"/>
+                <line x1="{x+14}" y1="{y-14}" x2="{x-14}" y2="{y+14}"
+                      stroke="{color}" stroke-width="4" stroke-linecap="round"/>
+            </a>
+            """
+        )
+    else:
+        svg_parts.append(
+            f"""
+            <line x1="{x-14}" y1="{y-14}" x2="{x+14}" y2="{y+14}"
+                  stroke="{color}" stroke-width="4" stroke-linecap="round"/>
+            <line x1="{x+14}" y1="{y-14}" x2="{x-14}" y2="{y+14}"
+                  stroke="{color}" stroke-width="4" stroke-linecap="round"/>
+            """
+        )
 
+# ---- FINAL SVG (FIXED SCALING, NO CROPPING) ----
 svg_html = f"""
 <div style="overflow-x:auto;">
-<svg width="1400" height="600" style="background:#0f1117; border-radius:12px;">
-    {''.join(svg_elements)}
+<svg viewBox="0 0 1400 700"
+     width="1400"
+     height="700"
+     preserveAspectRatio="xMidYMid meet"
+     style="
+        background-image:url('data:image/png;base64,{BG_IMG}');
+        background-size:contain;
+        background-repeat:no-repeat;
+        background-position:center;
+        border-radius:20px;
+     ">
+    {''.join(svg_parts)}
 </svg>
 </div>
 """
 
-st.markdown(svg_html, unsafe_allow_html=True)
+components.html(svg_html, height=750)
 
-
-st.subheader("Select a level")
-
-cols = st.columns(len(nodes))
-
-for i, level in enumerate(nodes.keys()):
-    unlocked = level in st.session_state.completed_levels
-
-    if cols[i].button(
-        f"Level {level}",
-        disabled=not unlocked,
-        key=f"level_{level}"
-    ):
-        st.session_state.current_level = level
-
-
+# -------------------------------------------------
+# LEVEL PANEL (NO BUTTON SELECTORS)
+# -------------------------------------------------
 st.divider()
-st.subheader(f"🎯 Level {st.session_state.current_level}")
+st.subheader(f"❌ Level {st.session_state.current_level}")
 
 st.info(
-    f"This is where the scenario for **Level {st.session_state.current_level}** will load.\n\n"
-    f"Role-specific content comes here later."
+    f"Role: **{role}**\n\n"
+    f"This is where the scenario for **Level {st.session_state.current_level}** appears.\n\n"
+    f"(Choices, outcomes, learning logic come next.)"
 )
 
-if st.button("Mark Level as Completed"):
-    next_level = st.session_state.current_level + 1
-    st.session_state.completed_levels.add(next_level)
-
-
-
-st.info("Unlocked levels are playable. Locked levels will open as you progress.")
-    
+if st.button("✅ Complete Level"):
+    st.session_state.completed_levels.add(st.session_state.current_level + 1)
+    st.success("Level completed! New path unlocked 🎉")
