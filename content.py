@@ -3,6 +3,28 @@ import streamlit as st
 def c(text, effects, msg=None):
     return {"text": text, "effects": effects, "msg": msg}
 
+# --- ADD THIS GLOSSARY SECTION ---
+GLOSSARY = {
+    "KCC": "Kisan Credit Card: Low interest loans for farmers.",
+    "Hybrid": "High-yield seeds that need more water.",
+    "Mandi": "Wholesale market for crops.",
+    "Interest": "Extra money paid back on a loan.",
+    "Subsidy": "Government discount.",
+    "Asset": "Valuable item owned (land, gold).",
+    "PF": "Provident Fund: Retirement savings.",
+    "EMI": "Monthly loan repayment.",
+    "SIP": "Systematic Investment: Monthly investing.",
+    "Inflation": "Price rise over time.",
+    "Equity": "Ownership share in a business.",
+    "Bootstrap": "Starting business with own money.",
+    "VC": "Investors who fund startups.",
+    "Burn Rate": "Monthly cash spending speed.",
+    "Runway": "Months left before money runs out.",
+    "Pivot": "Changing business strategy.",
+    "IPO": "Selling shares to public market."
+}
+# ---------------------------------
+
 STATIC_CAMPAIGNS = {
     "Farmer": {
         0: { "title": "Sowing Season", "npc": "Moneylender Seth", "avatar": "👹", "text": "Ramesh! Why run to the bank? Take ₹20,000 cash now. No paperwork.", "thought": "Bank takes days... but Seth's interest is deadly. The rain is coming soon.", "choices": [c("Take Seth's Cash", {"cash": 20000, "loan": 20000, "add_flag": "predatory_loan"}, "Debt Trap: 50% Interest rate!"), c("Go to Bank (KCC)", {"cash": 20000, "loan": 20000, "confidence": 10}, "Safe Loan: 7% Interest.")] },
