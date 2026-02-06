@@ -10,7 +10,7 @@ from config import apply_custom_css
 # 1. APP CONFIGURATION
 # ==========================================
 st.set_page_config(page_title="Financial Journey", layout="wide", page_icon="🌏", initial_sidebar_state="expanded")
-MAP_IMG = img_to_base64("assets/level_map.png")
+MAP_IMG = img_to_base64("assets/map_student.png")
 if "game" not in st.session_state: st.session_state.game = {"state": "INTRO"}
 
 # APPLY CSS
@@ -157,26 +157,13 @@ def render_scene():
     if not evt: p['state'] = "MAP"; st.rerun(); return
     play_narration(evt['story'])
     render_sidebar(p)
-<<<<<<< Updated upstream
-=======
-    
-    _, c2, _ = st.columns([1, 4, 1])
-    with c2:
-        st.markdown(render_hud_content(p), unsafe_allow_html=True)
-        st.markdown('<div class="scene-card">', unsafe_allow_html=True)
->>>>>>> Stashed changes
     _, c2, _ = st.columns([1, 4, 1])
     with c2:
         st.markdown(render_hud_content(p), unsafe_allow_html=True)
         
         st.markdown(render_mini_map(p['persona'], p['event_index']), unsafe_allow_html=True)
-<<<<<<< Updated upstream
         
         st.markdown('<div class="scene-card">', unsafe_allow_html=True)
-=======
-        # ------------------------------------------------
-
->>>>>>> Stashed changes
         if p['last_feedback']:
             st.markdown(f"<div class='game-alert alert-{p['feedback_type']}'>{p['last_feedback']}</div>", unsafe_allow_html=True)
             p['last_feedback'] = None
@@ -186,7 +173,6 @@ def render_scene():
         if "thought" in evt: st.markdown(f'<div class="thought-container"><div class="thought-bubble">💭 {evt["thought"]}</div></div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
         
-<<<<<<< Updated upstream
         # --- NEW: FINANCIAL ADVISOR SECTION ---
         # This expander provides specific advice for the current situation
         if "advisor" in evt:
@@ -194,16 +180,6 @@ def render_scene():
                 st.markdown(f"**Expert Recommendation:**\n\n{evt['advisor']}")
         # -------------------------------------
 
-=======
-        # Interactive Dialogue
-        render_interactive_dialogue(evt["avatar"], evt["npc"], evt["story"])
-        
-        # Thought Bubble - Rendered independently
-        if "thought" in evt: 
-            st.markdown(f'<div class="thought-container"><div class="thought-bubble">💭 {evt["thought"]}</div></div>', unsafe_allow_html=True)
-        
-        # Choices
->>>>>>> Stashed changes
         if "choices" in evt:
             cols = st.columns(len(evt["choices"]))
             for i, (txt, eff) in enumerate(evt["choices"].items()):
