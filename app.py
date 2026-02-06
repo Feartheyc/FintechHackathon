@@ -5,6 +5,7 @@ import time
 
 # ==========================================
 # 1. APP CONFIGURATION (Fully Preserved)
+# 1. APP CONFIGURATION
 # ==========================================
 
 st.set_page_config(
@@ -68,6 +69,7 @@ def play_narration(text):
 
 # ==========================================
 # 3. ULTRA-MODERN UI CSS (Fully Preserved)
+# 2. ULTRA-MODERN UI CSS
 # ==========================================
 
 st.markdown("""
@@ -253,17 +255,23 @@ st.markdown("""
 
 # ==========================================
 # 4. ADVANCED LOGIC ENGINE (Fully Preserved)
+# 3. ADVANCED LOGIC ENGINE
 # ==========================================
 
 def init_game(persona):
     defaults = {
         "Student": {"cash": 6000, "savings": 2000, "loan": 0, "investments": 0, "stress": 25},
         "Farmer": {"cash": 10000, "savings": 5000, "loan": 0, "investments": 500000, "stress": 10},
-        "Employee": {"cash": 50000, "savings": 100000, "loan": 0, "investments": 50000, "stress": 40}
+        "Employee": {"cash": 50000, "savings": 100000, "loan": 0, "investments": 50000, "stress": 40},
+        # --- ADDITIVE: FOUNDER STATS ---
+        "Founder": {"cash": 200000, "savings": 20000, "loan": 0, "investments": 0, "stress": 60}
     }
     base = defaults.get(persona, defaults["Student"]) 
     return {
         "state": "MAP",
+    base = defaults.get(persona, defaults["Student"])
+    return {
+        "state": "MAP", # CHANGED: Start at MAP
         "persona": persona, "event_index": 0,
         "cash": base['cash'], "savings": base['savings'], "loan": base['loan'],
         "investments": base['investments'], "insurance": False,
@@ -306,6 +314,7 @@ def try_apply_effects(effects):
 
 # ==========================================
 # 5. CONTENT DATABASE (Fully Preserved)
+# 4. CONTENT DATABASE
 # ==========================================
 
 def c(text, effects, msg=None):
@@ -441,6 +450,16 @@ STATIC_CAMPAIGNS = {
                 c("Ignore", {"stress": 20}, "Risky.")
             ]
         },
+    },
+    # --- ADDITIVE: FOUNDER CAMPAIGN ---
+    "Founder": {
+        0: { "title": "The Idea", "npc": "Inner Voice", "avatar": "💡", "text": "You have a unicorn idea. Quit your job to pursue it?", "thought": "High risk, infinite reward.", "choices": [c("Quit Job", {"cash": -20000, "stress": 10, "confidence": 10}, "All In."), c("Side Hustle", {"stress": 20}, "Safe play.")]},
+        1: { "title": "Co-Founder", "npc": "Tech Whiz", "avatar": "🧑‍💻", "text": "I can build the tech, but I want 50% equity.", "thought": "He's a genius but expensive.", "choices": [c("Agree", {"confidence": 10}, "Strong Team."), c("Hire Freelancer", {"cash": -30000}, "Kept Equity.")]},
+        2: { "title": "MVP Launch", "npc": "Market", "avatar": "🚀", "text": "Product is buggy. Launch anyway?", "thought": "Speed is life.", "choices": [c("Launch Now", {"cash": 10000, "stress": 10}, "Feedback"), c("Perfect It", {"cash": -20000}, "Burn Rate Up")]},
+        3: { "title": "Seed Round", "npc": "VC", "avatar": "💰", "text": "We offer ₹1 Crore for 20% equity.", "thought": "Fuel for the rocket ship.", "choices": [c("Take Money", {"cash": 10000000, "stress": -10}, "Funded!"), c("Bootstrap", {"confidence": 20, "stress": 20}, "Freedom.")]},
+        4: { "title": "The Pivot", "npc": "Analytics", "avatar": "📊", "text": "Users hate feature A but love feature B. Pivot?", "thought": "Changing direction is costly.", "choices": [c("Pivot", {"cash": -50000, "confidence": 10}, "Adapt."), c("Stay Course", {"stress": 10}, "Stubborn.")]},
+        5: { "title": "Cash Crunch", "npc": "CFO", "avatar": "📉", "text": "2 months of runway left.", "thought": "Do or die.", "choices": [c("Fire Sales Team", {"stress": 20, "regret": 10}, "Lean Ops."), c("Founder Salary Cut", {"confidence": 5}, "Lead by example.")]},
+        6: { "title": "The Exit", "npc": "Big Tech", "avatar": "🏢", "text": "Acquisition offer: ₹50 Crores.", "thought": "Generational wealth?", "choices": [c("Sell", {"cash": 50000000}, "Exit Strategy."), c("IPO", {"confidence": 30, "stress": 30}, "Legacy.")]}
     }
 }
 
@@ -523,7 +542,7 @@ def stud_intern(p):
 
 STUDENT_EVENTS = [stud_allowance, stud_insurance, stud_crypto, stud_exam, stud_phone, stud_intern]
 
-# --- ADAPTER (Preserved) ---
+# --- ADAPTER ---
 def get_event_data(persona, index):
     if persona == "Student":
         if index < len(STUDENT_EVENTS):
@@ -572,6 +591,9 @@ def render_persona_selection():
     st.markdown("<h1 style='text-align:center; font-size: 3rem;'>🌏 Arth-Sagar</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align:center; color:#94a3b8; margin-bottom: 40px;'>The Ultimate Financial Simulator</p>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
+    
+    # ADDITIVE: 4 Columns
+    c1, c2, c3, c4 = st.columns(4)
     with c1:
         if st.button("🚜 Play Farmer", use_container_width=True): 
             st.session_state.game = init_game("Farmer"); st.rerun()
@@ -581,15 +603,24 @@ def render_persona_selection():
     with c3:
         if st.button("🎓 Play Student", use_container_width=True): 
             st.session_state.game = init_game("Student"); st.rerun()
+    with c4:
+        if st.button("🚀 Play Founder", use_container_width=True): 
+            st.session_state.game = init_game("Founder"); st.rerun()
 
 def render_map():
     p = st.session_state.game
     current_lvl = p['event_index']
+    
+    # HUD MINI for MAP
+    ins_icon = "🛡️ ACTIVE" if p['insurance'] else "❌ NONE"
     st.markdown(f"""
     <div class="hud-container">
         <div class="hud-item"><div class="hud-label">ROLE</div><div class="hud-value">{p['persona']}</div></div>
         <div class="hud-item"><div class="hud-label">CASH</div><div class="hud-value money-val">₹{p['cash']:,}</div></div>
-        <div class="hud-item"><div class="hud-label">LEVEL</div><div class="hud-value">{current_lvl + 1}</div></div>
+        <div class="hud-item"><div class="hud-label">SAVINGS</div><div class="hud-value money-val">₹{p['savings']:,}</div></div>
+        <div class="hud-item"><div class="hud-label">DEBT</div><div class="hud-value debt-val">₹{p['loan']:,}</div></div>
+        <div class="hud-item"><div class="hud-label">STRESS</div><div class="hud-value stress-val">{p['stress']}%</div></div>
+        <div class="hud-item"><div class="hud-label">INSURANCE</div><div class="hud-value">{ins_icon}</div></div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -641,7 +672,7 @@ def render_scene():
     event_data = get_event_data(p['persona'], p['event_index'])
     
     if not event_data:
-        p['state'] = "MAP"
+        p['state'] = "MAP" # Go to map if done
         st.rerun()
         return
 
@@ -696,6 +727,7 @@ def render_scene():
                             p['event_index'] += 1
                             p['history'].append(f"{choice_text}")
                             p['state'] = "MAP"
+                            # ADDITIVE CHANGE: CONTINUOUS PLAY ENABLED (No go to map)
                         st.rerun()
         elif "auto" in event_data:
             if st.button("Continue ➡️", type="primary"):
@@ -703,7 +735,14 @@ def render_scene():
                 p['last_feedback'] = "Event Processed"
                 p['event_index'] += 1
                 p['state'] = "MAP"
+                # ADDITIVE CHANGE: CONTINUOUS PLAY ENABLED
                 st.rerun()
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        # Additive: Manual Map Button
+        if st.button("🗺️ Pause & Check Map", use_container_width=True):
+            p['state'] = "MAP"
+            st.rerun()
 
 # ==========================================
 # 8. MAIN LOOP
