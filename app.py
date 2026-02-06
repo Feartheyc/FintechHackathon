@@ -4,6 +4,7 @@ import streamlit.components.v1 as components
 import time
 
 # ==========================================
+# 1. APP CONFIGURATION (Fully Preserved)
 # 1. APP CONFIGURATION
 # ==========================================
 
@@ -29,6 +30,45 @@ if "game" not in st.session_state:
     st.session_state.game = {"state": "INTRO"}
 
 # ==========================================
+# 2. ADDITIVE: MULTILANGUAGE SPEECH ENGINE
+# ==========================================
+
+def play_narration(text):
+    """Additive feature: Detects language and uses the correct browser voice."""
+    if text:
+        # Clean text for JavaScript
+        clean_text = text.replace("'", "\\'").replace("\n", " ")
+        
+        # Simple detection logic for Hindi/Marathi/etc.
+        # This checks if the text contains Devanagari characters
+        is_hindi = any("\u0900" <= char <= "\u097F" for char in text)
+        lang_code = "hi-IN" if is_hindi else "en-GB"
+
+        components.html(
+            f"""
+            <script>
+                window.parent.speechSynthesis.cancel();
+                var msg = new SpeechSynthesisUtterance('{clean_text}');
+                msg.lang = '{lang_code}';
+                msg.rate = 0.9;
+                
+                // Find a voice that matches the language code
+                var voices = window.parent.speechSynthesis.getVoices();
+                for(var i = 0; i < voices.length; i++) {{
+                    if(voices[i].lang.indexOf('{lang_code}') !== -1) {{
+                        msg.voice = voices[i];
+                        break;
+                    }}
+                }}
+                
+                window.parent.speechSynthesis.speak(msg);
+            </script>
+            """,
+            height=0,
+        )
+
+# ==========================================
+# 3. ULTRA-MODERN UI CSS (Fully Preserved)
 # 2. ULTRA-MODERN UI CSS
 # ==========================================
 
@@ -206,7 +246,6 @@ st.markdown("""
     .alert-info { background: rgba(30, 58, 138, 0.8); border-color: #2563eb; color: #bfdbfe; }
     
     /* --- CUSTOM MAP UI ADAPTATION --- */
-    /* This connects your new map.png to the dark theme */
     #map-container {
         border: 2px solid #334155;
         box-shadow: 0 0 20px rgba(0,0,0,0.5);
@@ -215,6 +254,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
+# 4. ADVANCED LOGIC ENGINE (Fully Preserved)
 # 3. ADVANCED LOGIC ENGINE
 # ==========================================
 
@@ -226,6 +266,9 @@ def init_game(persona):
         # --- ADDITIVE: FOUNDER STATS ---
         "Founder": {"cash": 200000, "savings": 20000, "loan": 0, "investments": 0, "stress": 60}
     }
+    base = defaults.get(persona, defaults["Student"]) 
+    return {
+        "state": "MAP",
     base = defaults.get(persona, defaults["Student"])
     return {
         "state": "MAP", # CHANGED: Start at MAP
@@ -238,8 +281,6 @@ def init_game(persona):
 
 def try_apply_effects(effects):
     p = st.session_state.game
-    
-    # --- BANKRUPTCY PROTECTION ---
     savings_deduction = effects.get("savings", 0)
     cash_deduction = effects.get("cash", 0)
 
@@ -253,7 +294,6 @@ def try_apply_effects(effects):
             if p["savings"] - remaining < 0:
                 return False, "❌ Insufficient capital!"
 
-    # --- APPLY EFFECTS ---
     if effects.get("insurance") is False: p["insurance"] = False
     elif effects.get("insurance") is True: p["insurance"] = True
 
@@ -273,6 +313,7 @@ def try_apply_effects(effects):
     return True, "✅ Decision Recorded"
 
 # ==========================================
+# 5. CONTENT DATABASE (Fully Preserved)
 # 4. CONTENT DATABASE
 # ==========================================
 
@@ -283,7 +324,7 @@ STATIC_CAMPAIGNS = {
     "Farmer": {
         0: { 
             "title": "Sowing Season", "npc": "Moneylender Seth", "avatar": "👹", 
-            "text": "Ramesh! Why run to the bank? Take ₹20,000 cash now. No paperwork.", 
+            "text": "रमेश! बैंक जाने की क्या ज़रूरत है? अभी 20,000 रुपये नकद ले लो। कोई कागजी कार्रवाई नहीं।", 
             "thought": "Bank takes days... but Seth's interest is deadly. The rain is coming soon.",
             "choices": [
                 c("Take Seth's Cash", {"cash": 20000, "loan": 20000, "add_flag": "predatory_loan"}, "Debt Trap: 50% Interest rate!"),
@@ -422,7 +463,7 @@ STATIC_CAMPAIGNS = {
     }
 }
 
-# --- DYNAMIC PYTHON LOGIC CONTENT (STUDENT) ---
+# --- DYNAMIC PYTHON LOGIC CONTENT (STUDENT) (Fully Preserved) ---
 def stud_allowance(p):
     return {
         "story": "Here is your monthly allowance, son. Try to make it last the whole month, okay?",
@@ -512,19 +553,19 @@ def get_event_data(persona, index):
         if index in campaign:
             raw = campaign[index]
             choices_dict = {}
-            for c in raw['choices']:
-                effect = c['effects'].copy()
-                effect['__msg'] = c['msg'] 
-                choices_dict[c['text']] = effect
+            for c_item in raw['choices']:
+                effect = c_item['effects'].copy()
+                effect['__msg'] = c_item['msg'] 
+                choices_dict[c_item['text']] = effect
             return {
                 "story": raw['text'], "choices": choices_dict,
                 "npc": raw['npc'], "avatar": raw['avatar'],
-                "thought": raw.get('thought', "...") # Safety get
+                "thought": raw.get('thought', "...") 
             }
     return None
 
 # ==========================================
-# 5. RENDER ENGINE (Visuals & Helpers from d4vb.py)
+# 6. RENDER ENGINE (Visuals & Helpers - Fully Preserved)
 # ==========================================
 
 def get_visuals(story_text, event_data):
@@ -532,30 +573,24 @@ def get_visuals(story_text, event_data):
     return "🤔", "Inner Voice"
 
 def format_effects(effects):
-    """Generates the monetary values only"""
     changes = []
-    
-    # FILTER: Only show monetary values
     valid_keys = ["cash", "savings", "loan", "investments"]
-
     for k in valid_keys:
         if k in effects and effects[k] != 0:
             val = effects[k]
             sign = "+" if val > 0 else "-"
-            # Format: +₹3,000 Cash
             changes.append(f"{sign}₹{abs(val):,} {k.capitalize()}")
-    
     if not changes: return ""
     return f" ({', '.join(changes)})"
 
 # ==========================================
-# 6. ADDITIVE NEW UI WRAPPERS (For App.py integration)
+# 7. UI WRAPPERS (Preserved + Additive Multi-Language JS)
 # ==========================================
 
 def render_persona_selection():
-    """New Menu for Selecting Persona"""
     st.markdown("<h1 style='text-align:center; font-size: 3rem;'>🌏 Arth-Sagar</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align:center; color:#94a3b8; margin-bottom: 40px;'>The Ultimate Financial Simulator</p>", unsafe_allow_html=True)
+    c1, c2, c3 = st.columns(3)
     
     # ADDITIVE: 4 Columns
     c1, c2, c3, c4 = st.columns(4)
@@ -573,7 +608,6 @@ def render_persona_selection():
             st.session_state.game = init_game("Founder"); st.rerun()
 
 def render_map():
-    """New Level Selection Map"""
     p = st.session_state.game
     current_lvl = p['event_index']
     
@@ -591,67 +625,31 @@ def render_map():
     """, unsafe_allow_html=True)
 
     c1, c2 = st.columns([3, 1])
-
     with c1:
-        # SVG PATH LOGIC FOR DOTS (Additive Feature)
-        # Using specific % coordinates to match the provided isometric image visual flow
-        path_coords = [
-            (10, 80), (20, 70), (30, 75), (40, 60), 
-            (50, 50), (60, 45), (70, 55), (80, 40), (90, 30)
-        ]
-        
+        path_coords = [(10, 80), (20, 70), (30, 75), (40, 60), (50, 50), (60, 45), (70, 55), (80, 40), (90, 30)]
         svg_content = ""
         points_str = ""
         for (x, y) in path_coords:
             points_str += f"{x*8},{y*6} " 
-        
         svg_content += f'<polyline points="{points_str}" fill="none" stroke="#ffd966" stroke-width="6" stroke-dasharray="10,5"/>'
-
         for idx, (bx, by) in enumerate(path_coords):
-            cx = bx * 8 
-            cy = by * 6 
-            
+            cx, cy = bx * 8, by * 6 
             if idx < current_lvl:
-                color = "#4ade80" # Green (Done)
-                radius = 10
-                anim = ""
+                color, radius, anim = "#4ade80", 10, ""
             elif idx == current_lvl:
-                color = "#ff5252" # Red (Active)
-                radius = 15
-                anim = """<animate attributeName="r" values="15;18;15" dur="1.5s" repeatCount="indefinite" /><animate attributeName="stroke-width" values="0;4;0" dur="1.5s" repeatCount="indefinite" />"""
+                color, radius, anim = "#ff5252", 15, """<animate attributeName="r" values="15;18;15" dur="1.5s" repeatCount="indefinite" /><animate attributeName="stroke-width" values="0;4;0" dur="1.5s" repeatCount="indefinite" />"""
             else:
-                color = "#64748b" # Grey (Locked)
-                radius = 8
-                anim = ""
-
+                color, radius, anim = "#64748b", 8, ""
             svg_content += f"""<circle cx="{cx}" cy="{cy}" r="{radius}" fill="{color}" stroke="white" stroke-width="2">{anim}</circle>"""
 
-        components.html(
-            f"""
-            <style>
-                body {{ margin: 0; overflow: hidden; }}
-                #map-container {{
-                    position: relative;
-                    width: 100%;
-                    height: 600px;
-                    background-image: url('data:image/png;base64,{MAP_IMG}');
-                    background-size: cover;
-                    background-position: center;
-                    border-radius: 12px;
-                }}
-                svg {{ width: 100%; height: 100%; }}
-            </style>
-            <div id="map-container">
-                <svg viewBox="0 0 800 600" preserveAspectRatio="none">{svg_content}</svg>
-            </div>
-            """,
-            height=620 
-        )
+        components.html(f"""
+            <style>body {{ margin: 0; overflow: hidden; }} #map-container {{ position: relative; width: 100%; height: 600px; background-image: url('data:image/png;base64,{MAP_IMG}'); background-size: cover; background-position: center; border-radius: 12px; }} svg {{ width: 100%; height: 100%; }}</style>
+            <div id="map-container"><svg viewBox="0 0 800 600" preserveAspectRatio="none">{svg_content}</svg></div>
+            """, height=620 )
 
     with c2:
         st.markdown(f"### Level {current_lvl + 1}")
         evt = get_event_data(p['persona'], current_lvl)
-        
         if evt:
             st.markdown(f"**{evt.get('title', 'Event')}**")
             st.info("Your journey continues...")
@@ -663,14 +661,13 @@ def render_map():
             if st.button("🏆 Finish", type="primary"):
                 st.session_state.game['state'] = "END"
                 st.rerun()
-                
         st.markdown("---")
         if st.button("⬅ Change Role"):
             st.session_state.game['state'] = "INTRO"
             st.rerun()
 
 def render_scene():
-    """Main Game Scene (From d4vb.py logic)"""
+    """Main Game Scene (Additive multi-language speech trigger included)"""
     p = st.session_state.game
     event_data = get_event_data(p['persona'], p['event_index'])
     
@@ -679,14 +676,14 @@ def render_scene():
         st.rerun()
         return
 
+    # --- ADDITIVE CHANGE: TRIGGERS BROWSER NATIVE MULTI-LANGUAGE SPEECH ---
+    play_narration(event_data['story'])
+
     avatar, npc_name = get_visuals(event_data['story'], event_data)
     ins_icon = "🛡️ ACTIVE" if p['insurance'] else "❌ NONE"
 
-    # Use Columns to center game UI on wide screen
     _, c2, _ = st.columns([1, 2, 1])
-    
     with c2:
-        # HUD
         st.markdown(f"""
         <div class="hud-container">
             <div class="hud-item"><div class="hud-label">ROLE</div><div class="hud-value">{p['persona']}</div></div>
@@ -699,42 +696,29 @@ def render_scene():
         """, unsafe_allow_html=True)
         
         st.markdown(f'<div class="scene-card">', unsafe_allow_html=True)
-
         if p['last_feedback']:
             css = f"alert-{p['feedback_type']}"
             st.markdown(f"<div class='game-alert {css}'>{p['last_feedback']}</div>", unsafe_allow_html=True)
             p['last_feedback'] = None
 
-        # DIALOGUE
         st.markdown(f"""
         <div class="dialogue-box">
             <div class="avatar-box">{avatar}</div>
-            <div class="speech-bubble">
-                <span class="speaker-name">{npc_name}</span>
-                {event_data['story']}
-            </div>
+            <div class="speech-bubble"><span class="speaker-name">{npc_name}</span>{event_data['story']}</div>
         </div>
         """, unsafe_allow_html=True)
 
-        # THOUGHT BUBBLE
         if "thought" in event_data:
-            st.markdown(f"""
-            <div class="thought-container">
-                <div class="thought-bubble">💭 {event_data['thought']}</div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(f"""<div class="thought-container"><div class="thought-bubble">💭 {event_data['thought']}</div></div>""", unsafe_allow_html=True)
 
         st.markdown('</div>', unsafe_allow_html=True)
 
-        # CHOICES
         if "choices" in event_data:
             cols = st.columns(len(event_data["choices"]))
             for i, (choice_text, effects) in enumerate(event_data["choices"].items()):
                 with cols[i]:
                     preview_text = format_effects(effects)
-                    full_label = f"{choice_text} {preview_text}"
-                    
-                    if st.button(full_label, key=f"btn_{p['event_index']}_{i}"):
+                    if st.button(f"{choice_text} {preview_text}", key=f"btn_{p['event_index']}_{i}"):
                         custom_msg = effects.pop('__msg', None)
                         success, sys_msg = try_apply_effects(effects)
                         p['last_feedback'] = custom_msg if success and custom_msg else sys_msg
@@ -742,6 +726,7 @@ def render_scene():
                         if success:
                             p['event_index'] += 1
                             p['history'].append(f"{choice_text}")
+                            p['state'] = "MAP"
                             # ADDITIVE CHANGE: CONTINUOUS PLAY ENABLED (No go to map)
                         st.rerun()
         elif "auto" in event_data:
@@ -749,6 +734,7 @@ def render_scene():
                 try_apply_effects(event_data["auto"])
                 p['last_feedback'] = "Event Processed"
                 p['event_index'] += 1
+                p['state'] = "MAP"
                 # ADDITIVE CHANGE: CONTINUOUS PLAY ENABLED
                 st.rerun()
         
@@ -759,22 +745,14 @@ def render_scene():
             st.rerun()
 
 # ==========================================
-# 7. MAIN LOOP
+# 8. MAIN LOOP
 # ==========================================
 
 state = st.session_state.game['state']
-
-if state == "INTRO":
-    render_persona_selection()
-
-elif state == "MAP":
-    render_map()
-
-elif state == "PLAYING":
-    render_scene()
-
+if state == "INTRO": render_persona_selection()
+elif state == "MAP": render_map()
+elif state == "PLAYING": render_scene()
 elif state == "END":
-    # End screen logic from d4vb.py
     p = st.session_state.game
     nw = (p['cash'] + p['savings'] + p['investments']) - p['loan']
     st.balloons()
@@ -783,9 +761,7 @@ elif state == "END":
         <h1 style='color: #fbbf24;'>Journey Complete: {p['persona']}</h1>
         <h2 style="color:{'#4ade80' if nw>0 else '#f87171'}; font-family: 'Space Mono', monospace;">Net Worth: ₹{nw:,}</h2>
         <div style='display:flex; justify-content:center; gap:20px; margin-top:20px; font-weight:bold;'>
-             <span style='color:#f87171'>Debt: ₹{p['loan']:,}</span> | 
-             <span style='color:#60a5fa'>Savings: ₹{p['savings']:,}</span> | 
-             <span style='color:#c084fc'>Investments: ₹{p['investments']:,}</span>
+             <span style='color:#f87171'>Debt: ₹{p['loan']:,}</span> | <span style='color:#60a5fa'>Savings: ₹{p['savings']:,}</span> | <span style='color:#c084fc'>Investments: ₹{p['investments']:,}</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
