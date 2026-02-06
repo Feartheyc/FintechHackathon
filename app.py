@@ -1,5 +1,9 @@
 import streamlit as st
 import streamlit.components.v1 as components
+import sqlite3
+import yfinance as yf
+import pandas as pd
+from datetime import datetime
 from sidebar import render_sidebar
 from utils import img_to_base64, play_narration, render_interactive_dialogue
 from engine import init_game, try_apply_effects
@@ -7,7 +11,24 @@ from content import get_event_data
 from config import apply_custom_css
 
 # ==========================================
-# 1. APP CONFIGURATION
+# 1. ADDITIVE: DATABASE SETUP
+# ==========================================
+conn = sqlite3.connect("portfolio.db", check_same_thread=False)
+db = conn.cursor()
+db.execute("""
+CREATE TABLE IF NOT EXISTS transactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, 
+    username TEXT, 
+    date TEXT, 
+    stock TEXT, 
+    qty INTEGER, 
+    price REAL
+)
+""")
+conn.commit()
+
+# ==========================================
+# 2. APP CONFIGURATION
 # ==========================================
 st.set_page_config(page_title="Financial Journey", layout="wide", page_icon="🌏", initial_sidebar_state="expanded")
 MAP_IMG = img_to_base64("assets/level_map.png")
@@ -17,7 +38,25 @@ if "game" not in st.session_state: st.session_state.game = {"state": "INTRO"}
 apply_custom_css()
 
 # ==========================================
-# 3. HELPERS
+# 3. ADDITIVE: STOCK MARKET ENGINE
+# ==========================================
+TICKERS = [
+    "RELIANCE.NS", "TCS.NS", "HDFCBANK.NS", "INFY.NS", "SBIN.NS", 
+    "ICICIBANK.NS", "TITAN.NS", "TATASTEEL.NS", "ITC.NS"
+]
+
+@st.cache_data(ttl=600)
+def get_market_data(tickers):
+    data = {}
+    for ticker in tickers:
+        try:
+            df = yf.Ticker(ticker).history(period="1y")
+            if not df.empty: data[ticker] = df['Close']
+        except: continue
+    return pd.DataFrame(data)
+
+# ==========================================
+# 4. HELPERS
 # ==========================================
 def format_effects(effects):
     changes = []
@@ -29,21 +68,78 @@ def format_effects(effects):
 
 def render_hud_content(p):
     ins_status = "✅ Active" if p['insurance'] else "❌ None"
-    # Using the CSS classes defined in config.py
     return f"""
     <div class="hud-container">
         <div class="hud-item"><div class="hud-label">ROLE</div><div class="hud-value">{p['persona']}</div></div>
-        <div class="hud-item"><div class="hud-label">CASH</div><div class="hud-value money-val">₹{p['cash']:,}</div></div>
-        <div class="hud-item"><div class="hud-label">SAVINGS</div><div class="hud-value money-val">₹{p['savings']:,}</div></div>
-        <div class="hud-item"><div class="hud-label">DEBT</div><div class="hud-value debt-val">₹{p['loan']:,}</div></div>
-        <div class="hud-item"><div class="hud-label">INVEST</div><div class="hud-value invest-val">₹{p['investments']:,}</div></div>
+        <div class="hud-item"><div class="hud-label">CASH</div><div class="hud-value money-val">₹{int(p['cash']):,}</div></div>
+        <div class="hud-item"><div class="hud-label">SAVINGS</div><div class="hud-value money-val">₹{int(p['savings']):,}</div></div>
+        <div class="hud-item"><div class="hud-label">DEBT</div><div class="hud-value debt-val">₹{int(p['loan']):,}</div></div>
+        <div class="hud-item"><div class="hud-label">INVEST</div><div class="hud-value invest-val">₹{int(p['investments']):,}</div></div>
         <div class="hud-item"><div class="hud-label">STRESS</div><div class="hud-value stress-val">{p['stress']}%</div></div>
         <div class="hud-item"><div class="hud-label">INSURANCE</div><div class="hud-value">{ins_status}</div></div>
     </div>
     """
 
 # ==========================================
-# 4. SCENE RENDERING
+# 5. ADDITIVE: INVESTMENT SIMULATOR SCENE
+# ==========================================
+def render_investment_sim():
+    p = st.session_state.game
+    st.markdown("## 📈 NSE Stock Market Simulator")
+    
+    prices = get_market_data(TICKERS)
+    if prices.empty:
+        st.error("Could not fetch market data. Please check your connection.")
+        if st.button("Back to Map"): p['state'] = "MAP"; st.rerun()
+        return
+
+    latest_prices = prices.iloc[-1]
+    
+    col1, col2 = st.columns([1, 2])
+    
+    with col1:
+        st.subheader("Execute Trade")
+        selected_stock = st.selectbox("Select Asset", TICKERS)
+        curr_price = latest_prices[selected_stock]
+        st.metric(label="Current Price", value=f"₹{curr_price:.2f}")
+        
+        trade_type = st.radio("Action", ["Buy", "Sell"])
+        qty = st.number_input("Quantity", min_value=1, step=1)
+        total_val = curr_price * qty
+        
+        if st.button("Confirm Transaction", use_container_width=True):
+            if trade_type == "Buy":
+                if p['cash'] >= total_val:
+                    p['cash'] -= total_val
+                    p['investments'] += total_val
+                    db.execute("INSERT INTO transactions(username, date, stock, qty, price) VALUES (?, ?, ?, ?, ?)",
+                              (p['persona'], datetime.now().isoformat(), selected_stock, qty, curr_price))
+                    conn.commit()
+                    st.success(f"Bought {qty} shares of {selected_stock}")
+                    st.rerun()
+                else:
+                    st.error("Insufficient Cash!")
+            else:
+                # Basic Sell Logic
+                p['cash'] += total_val
+                p['investments'] -= total_val
+                db.execute("INSERT INTO transactions(username, date, stock, qty, price) VALUES (?, ?, ?, ?, ?)",
+                          (p['persona'], datetime.now().isoformat(), selected_stock, -qty, curr_price))
+                conn.commit()
+                st.success(f"Sold {qty} shares of {selected_stock}")
+                st.rerun()
+
+    with col2:
+        st.subheader("Market Trend")
+        st.line_chart(prices[selected_stock])
+    
+    st.markdown("---")
+    if st.button("⬅ Return to Map", use_container_width=True):
+        p['state'] = "MAP"
+        st.rerun()
+
+# ==========================================
+# 6. SCENE RENDERING
 # ==========================================
 def render_persona_selection():
     st.markdown("<h1 style='text-align:center; font-size: 3rem;'>🌏 Arth-Sagar</h1>", unsafe_allow_html=True)
@@ -82,7 +178,13 @@ def render_map():
             if st.button("🚀 Enter Level", type="primary", use_container_width=True): st.session_state.game['state'] = "PLAYING"; st.rerun()
         else:
             if st.button("🏆 Finish", type="primary"): st.session_state.game['state'] = "END"; st.rerun()
+        
+        # ADDITIVE: Link to Investment Sim
         st.markdown("---")
+        if st.button("📈 Open Stock Market", use_container_width=True):
+            p['state'] = "INVEST"
+            st.rerun()
+            
         if st.button("⬅ Change Role"): st.session_state.game['state'] = "INTRO"; st.rerun()
 
 def render_scene():
@@ -92,30 +194,19 @@ def render_scene():
     play_narration(evt['story'])
     render_sidebar(p)
     
-    # --- LAYOUT: [1, 4, 1] gives the central game card more width ---
     _, c2, _ = st.columns([1, 4, 1])
-    
     with c2:
-        # 1. Render HUD
         st.markdown(render_hud_content(p), unsafe_allow_html=True)
-        
-        # 2. Render Scene Card Container
         st.markdown('<div class="scene-card">', unsafe_allow_html=True)
-        
         if p['last_feedback']:
             st.markdown(f"<div class='game-alert alert-{p['feedback_type']}'>{p['last_feedback']}</div>", unsafe_allow_html=True)
             p['last_feedback'] = None
         
-        # 3. CALL UTILS TO RENDER DIALOGUE + BUBBLE
-        # This function creates the HTML for the avatar AND the bubble AND the interactive text
         render_interactive_dialogue(evt["avatar"], evt["npc"], evt["story"])
-        
         if "thought" in evt: 
             st.markdown(f'<div class="thought-container"><div class="thought-bubble">💭 {evt["thought"]}</div></div>', unsafe_allow_html=True)
-        
         st.markdown('</div>', unsafe_allow_html=True)
         
-        # 4. Render Choices
         if "choices" in evt:
             cols = st.columns(len(evt["choices"]))
             for i, (txt, eff) in enumerate(evt["choices"].items()):
@@ -133,12 +224,13 @@ def render_scene():
         if st.button("🗺️ Map"): p['state'] = "MAP"; st.rerun()
 
 # ==========================================
-# 5. MAIN LOOP
+# 7. MAIN LOOP
 # ==========================================
 state = st.session_state.game['state']
 if state == "INTRO": render_persona_selection()
 elif state == "MAP": render_map()
 elif state == "PLAYING": render_scene()
+elif state == "INVEST": render_investment_sim()
 elif state == "END":
     p = st.session_state.game
     nw = (p['cash'] + p['savings'] + p['investments']) - p['loan']
