@@ -7,7 +7,7 @@ from datetime import datetime
 from sidebar import render_sidebar
 from utils import img_to_base64, play_narration, render_interactive_dialogue
 from engine import init_game, try_apply_effects
-from content import get_event_data
+from content import get_event_data, STATIC_CAMPAIGNS, STUDENT_EVENTS
 from config import apply_custom_css
 
 # ==========================================
@@ -76,9 +76,78 @@ def render_hud_content(p):
         <div class="hud-item"><div class="hud-label">DEBT</div><div class="hud-value debt-val">₹{int(p['loan']):,}</div></div>
         <div class="hud-item"><div class="hud-label">INVEST</div><div class="hud-value invest-val">₹{int(p['investments']):,}</div></div>
         <div class="hud-item"><div class="hud-label">STRESS</div><div class="hud-value stress-val">{p['stress']}%</div></div>
-        <div class="hud-item"><div class="hud-label">INSURANCE</div><div class="hud-value">{ins_status}</div></div>
+        <div class="hud-item"><div class="hud-label">INSURANCE</div><div class="hud-value ins-val">{ins_status}</div></div>
     </div>
     """
+
+# --- MINI-MAP RENDERER ---
+def render_mini_map(persona, current_lvl):
+    if persona == "Student":
+        total_levels = len(STUDENT_EVENTS)
+    else:
+        total_levels = len(STATIC_CAMPAIGNS.get(persona, {}))
+    
+    dots_html = ""
+    for i in range(total_levels):
+        if i < current_lvl:
+            status = "completed"
+            content = "✓"
+        elif i == current_lvl:
+            status = "active"
+            content = ""
+        else:
+            status = "pending"
+            content = ""
+            
+        dots_html += f"<div class='step {status}'>{content}</div>"
+        
+        if i < total_levels - 1:
+            line_status = "line-active" if i < current_lvl else "line-pending"
+            dots_html += f"<div class='step-line {line_status}'></div>"
+
+    return f"""
+<style>
+    .progress-wrapper {{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 15px 20px;
+        margin-bottom: 20px;
+        background: linear-gradient(145deg, #1e293b, #0f172a);
+        border: 1px solid #334155;
+        border-radius: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }}
+    .step {{
+        width: 24px; height: 24px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: bold; font-size: 12px;
+        z-index: 2;
+        transition: all 0.3s;
+    }}
+    .step.completed {{ background: #4ade80; color: #064e3b; box-shadow: 0 0 8px rgba(74, 222, 128, 0.4); }}
+    .step.active {{ 
+        background: #ff5252; border: 2px solid white; 
+        box-shadow: 0 0 12px rgba(255, 82, 82, 0.8); 
+        transform: scale(1.3);
+    }}
+    .step.pending {{ background: #334155; border: 2px solid #475569; }}
+    
+    .step-line {{
+        flex-grow: 1;
+        height: 4px;
+        margin: 0 2px;
+        border-radius: 2px;
+    }}
+    .line-active {{ background: #4ade80; }}
+    .line-pending {{ background: #334155; }}
+</style>
+<div class="progress-wrapper">
+    {dots_html}
+</div>
+"""
 
 # ==========================================
 # 5. ADDITIVE: INVESTMENT SIMULATOR SCENE
@@ -153,16 +222,14 @@ def render_persona_selection():
     for char in chars:
         with char["col"]:
             st.markdown(f'<div class="char-card"><img src="{char["img"]}" class="char-img"><h3>{char["role"]}</h3><p>{char["desc"]}</p></div>', unsafe_allow_html=True)
-            st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
             if st.button(char["btn"], key=f"sel_{char['role']}", use_container_width=True):
                 st.session_state.game = init_game(char["role"]); st.rerun()
 
 def render_map():
     p = st.session_state.game
     current_lvl = p['event_index']
-    
     st.markdown(render_hud_content(p), unsafe_allow_html=True)
-    
     c1, c2 = st.columns([3, 1])
     with c1:
         path = [(10, 80), (20, 70), (30, 75), (40, 60), (50, 50), (60, 45), (70, 55), (80, 40), (90, 30)]
@@ -193,20 +260,42 @@ def render_scene():
     if not evt: p['state'] = "MAP"; st.rerun(); return
     play_narration(evt['story'])
     render_sidebar(p)
+<<<<<<< Updated upstream
     
     _, c2, _ = st.columns([1, 4, 1])
     with c2:
         st.markdown(render_hud_content(p), unsafe_allow_html=True)
         st.markdown('<div class="scene-card">', unsafe_allow_html=True)
+=======
+    _, c2, _ = st.columns([1, 4, 1])
+    with c2:
+        st.markdown(render_hud_content(p), unsafe_allow_html=True)
+        
+        # --- RENDER MINI-MAP (DIRECTLY, NO EXTRA DIV) ---
+        st.markdown(render_mini_map(p['persona'], p['event_index']), unsafe_allow_html=True)
+        # ------------------------------------------------
+
+>>>>>>> Stashed changes
         if p['last_feedback']:
             st.markdown(f"<div class='game-alert alert-{p['feedback_type']}'>{p['last_feedback']}</div>", unsafe_allow_html=True)
             p['last_feedback'] = None
         
+<<<<<<< Updated upstream
         render_interactive_dialogue(evt["avatar"], evt["npc"], evt["story"])
         if "thought" in evt: 
             st.markdown(f'<div class="thought-container"><div class="thought-bubble">💭 {evt["thought"]}</div></div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
         
+=======
+        # Interactive Dialogue
+        render_interactive_dialogue(evt["avatar"], evt["npc"], evt["story"])
+        
+        # Thought Bubble - Rendered independently
+        if "thought" in evt: 
+            st.markdown(f'<div class="thought-container"><div class="thought-bubble">💭 {evt["thought"]}</div></div>', unsafe_allow_html=True)
+        
+        # Choices
+>>>>>>> Stashed changes
         if "choices" in evt:
             cols = st.columns(len(evt["choices"]))
             for i, (txt, eff) in enumerate(evt["choices"].items()):
@@ -219,7 +308,6 @@ def render_scene():
                         st.rerun()
         elif "auto" in evt:
             if st.button("Continue ➡️", type="primary"): try_apply_effects(evt["auto"]); p['event_index'] += 1; st.rerun()
-        
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("🗺️ Map"): p['state'] = "MAP"; st.rerun()
 

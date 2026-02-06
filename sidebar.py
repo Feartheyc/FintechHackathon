@@ -1,56 +1,135 @@
 import streamlit as st
 
 # -----------------------------
-# SCHEMES DATABASE (LEVEL BASED, EXPANDED)
+# SCHEMES DATABASE (Rural-Friendly)
 # -----------------------------
 SCHEMES = {
     "Student": [
-        {"name": "Student Loan Subsidy", "condition": lambda p: p['cash'] < 5000, "levels": [0, 1, 2],
-         "effects": {"cash": 5000}},
-        {"name": "Merit Scholarship", "condition": lambda p: p['confidence'] >= 50, "levels": [0, 3, 5],
-         "effects": {"savings": 5000, "confidence": 5}},
-        {"name": "Health Insurance Subsidy", "condition": lambda p: not p['insurance'], "levels": [1, 4],
-         "effects": {"insurance": True}},
-        {"name": "Crypto Awareness Workshop", "condition": lambda p: p['cash'] >= 1000, "levels": [2],
-         "effects": {"confidence": 3}},
-        {"name": "Internship Booster Grant", "condition": lambda p: p['confidence'] >= 60, "levels": [5],
-         "effects": {"cash": 8000, "confidence": 5}},
-        {"name": "Library Membership Discount", "condition": lambda p: p['cash'] >= 500, "levels": [1, 2, 3],
-         "effects": {"cash": -500, "confidence": 2}},
-        {"name": "Scholarship Guidance Program", "condition": lambda p: p['confidence'] < 60, "levels": [0, 4],
-         "effects": {"confidence": 4}},
+        {
+            "name": "Vidya Lakshmi Portal",
+            "desc": "Govt pays your loan interest while you study. No worry about paying back immediately.",
+            "condition": lambda p: p['cash'] < 5000, 
+            "levels": [0, 1, 2],
+            "effects": {"cash": 5000}
+        },
+        {
+            "name": "PM Scholarship",
+            "desc": "Free money for students with good marks. You don't have to pay this back.",
+            "condition": lambda p: p['confidence'] >= 50, 
+            "levels": [0, 3, 5],
+            "effects": {"savings": 5000, "confidence": 5}
+        },
+        {
+            "name": "Ayushman Bharat",
+            "desc": "Free hospital treatment card up to ₹5 Lakhs for your family.",
+            "condition": lambda p: not p['insurance'], 
+            "levels": [1, 4],
+            "effects": {"insurance": True}
+        },
+        {
+            "name": "Digital India Skill",
+            "desc": "Learn computer skills for free to get better part-time jobs.",
+            "condition": lambda p: p['cash'] >= 1000, 
+            "levels": [2],
+            "effects": {"confidence": 3}
+        },
     ],
     "Farmer": [
-        {"name": "KCC Loan", "condition": lambda p: p['loan'] < 50000, "levels": [0, 3],
-         "effects": {"cash": 20000, "loan": 20000}},
-        {"name": "Crop Insurance", "condition": lambda p: not p['insurance'], "levels": [0, 2, 4],
-         "effects": {"insurance": True}},
-        {"name": "Fertilizer Subsidy", "condition": lambda p: True, "levels": [0, 1, 2, 3],
-         "effects": {"savings": 3000}},
-        {"name": "Tractor Loan Support", "condition": lambda p: p['loan'] < 500000, "levels": [5],
-         "effects": {"loan": 500000}},
-        {"name": "Market Price Alert", "condition": lambda p: True, "levels": [2],
-         "effects": {"confidence": 5}},
-        {"name": "Irrigation Subsidy", "condition": lambda p: p['cash'] < 10000, "levels": [1, 3],
-         "effects": {"cash": 5000}},
-        {"name": "Seed Quality Grant", "condition": lambda p: p.get("flags", {}).get("hybrid_seeds", False), "levels": [1],
-         "effects": {"savings": 2000}},
+        {
+            "name": "Kisan Credit Card (KCC)",
+            "desc": "Get a bank loan at very low interest (4-7%) for seeds and fertilizers.",
+            "condition": lambda p: p['loan'] < 50000, 
+            "levels": [0, 3],
+            "effects": {"cash": 20000, "loan": 20000}
+        },
+        {
+            "name": "PM Fasal Bima Yojana",
+            "desc": "Crop Insurance. If rain or pests destroy your crop, the government pays you.",
+            "condition": lambda p: not p['insurance'], 
+            "levels": [0, 2, 4],
+            "effects": {"insurance": True}
+        },
+        {
+            "name": "Fertilizer Subsidy",
+            "desc": "Get Urea and DAP fertilizers at a huge discount directly from the shop.",
+            "condition": lambda p: True, 
+            "levels": [0, 1, 2, 3],
+            "effects": {"savings": 3000}
+        },
+        {
+            "name": "PM Kisan Tractor",
+            "desc": "Get 20-50% money help (subsidy) from govt to buy a new tractor.",
+            "condition": lambda p: p['loan'] < 500000, 
+            "levels": [5],
+            "effects": {"loan": 500000}
+        },
+        {
+            "name": "e-NAM Market",
+            "desc": "Check the real price of crops on your phone so middlemen can't cheat you.",
+            "condition": lambda p: True, 
+            "levels": [2],
+            "effects": {"confidence": 5}
+        },
+        {
+            "name": "PM Krishi Sinchai",
+            "desc": "Money help for installing drip irrigation or sprinklers to save water.",
+            "condition": lambda p: p['cash'] < 10000, 
+            "levels": [1, 3],
+            "effects": {"cash": 5000}
+        },
     ],
     "Employee": [
-        {"name": "PF Contribution Bonus", "condition": lambda p: True, "levels": [0, 2, 3, 5],
-         "effects": {"savings": 10000}},
-        {"name": "Medical Insurance Scheme", "condition": lambda p: not p['insurance'], "levels": [4],
-         "effects": {"insurance": True}},
-        {"name": "Skill Development Program", "condition": lambda p: p['confidence'] < 50, "levels": [1, 3, 6],
-         "effects": {"confidence": 5}},
-        {"name": "Salary Advance Option", "condition": lambda p: p['cash'] < 20000, "levels": [0, 1, 2],
-         "effects": {"cash": 10000, "loan": 5000}},
-        {"name": "Housing Allowance", "condition": lambda p: True, "levels": [2, 5],
-         "effects": {"cash": 20000}},
-        {"name": "Transport Subsidy", "condition": lambda p: p['loan'] > 0, "levels": [2, 3],
-         "effects": {"cash": 5000}},
-        {"name": "Health Check-up Voucher", "condition": lambda p: p['stress'] > 50, "levels": [4, 6],
-         "effects": {"stress": -10}},
+        {
+            "name": "EPF (Provident Fund)",
+            "desc": "Automatic savings from your salary for old age. Govt gives interest on it.",
+            "condition": lambda p: True, 
+            "levels": [0, 2, 3, 5],
+            "effects": {"savings": 10000}
+        },
+        {
+            "name": "ESIC Health Card",
+            "desc": "Full medical treatment for you and family at very low cost.",
+            "condition": lambda p: not p['insurance'], 
+            "levels": [4],
+            "effects": {"insurance": True}
+        },
+        {
+            "name": "PM Kaushal Vikas",
+            "desc": "Free training to learn new technical skills and get a promotion.",
+            "condition": lambda p: p['confidence'] < 50, 
+            "levels": [1, 3, 6],
+            "effects": {"confidence": 5}
+        },
+        {
+            "name": "PMAY (Awas Yojana)",
+            "desc": "Money help from govt to build or buy your first pucca house.",
+            "condition": lambda p: True, 
+            "levels": [2, 5],
+            "effects": {"cash": 20000}
+        },
+    ],
+    "Founder": [
+        {
+            "name": "Startup India Seed Fund",
+            "desc": "Govt gives money to start your business idea without taking shares.",
+            "condition": lambda p: p['cash'] < 50000,
+            "levels": [0, 1],
+            "effects": {"cash": 50000, "confidence": 10}
+        },
+        {
+            "name": "MUDRA Loan",
+            "desc": "Easy business loan up to ₹10 Lakhs without keeping your house as guarantee.",
+            "condition": lambda p: p['loan'] == 0,
+            "levels": [1, 2, 3],
+            "effects": {"cash": 100000, "loan": 100000}
+        },
+        {
+            "name": "Tax Holiday",
+            "desc": "You don't have to pay Income Tax for the first 3 years of profit.",
+            "condition": lambda p: True,
+            "levels": [3, 4, 5],
+            "effects": {"savings": 20000}
+        }
     ]
 }
 
@@ -58,7 +137,9 @@ SCHEMES = {
 # SIDEBAR RENDER FUNCTION
 # -----------------------------
 def render_sidebar(game_state):
-    st.sidebar.markdown("### 🌏 Game Sidebar")
+    st.sidebar.markdown("### 🏛️ Govt Schemes")
+    st.sidebar.markdown("<small>Schemes available for you right now:</small>", unsafe_allow_html=True)
+    st.sidebar.markdown("---")
 
     if "persona" not in game_state:
         st.sidebar.info("Start a journey to see available schemes.")
@@ -72,8 +153,8 @@ def render_sidebar(game_state):
 
     persona = game_state['persona']
     level = game_state.get("event_index", 0)
-    st.sidebar.markdown(f"### 🌏 {persona} - Eligible Schemes (Level {level})")
 
+    # Filter Eligible Schemes
     eligible_schemes = []
     for scheme in SCHEMES.get(persona, []):
         try:
@@ -87,33 +168,39 @@ def render_sidebar(game_state):
             continue
 
     if eligible_schemes:
-        for scheme in eligible_schemes:
-            if st.sidebar.button(f"Claim {scheme['name']}"):
-                # Apply scheme effects
-                for k, v in scheme.get("effects", {}).items():
-                    if k in game_state:
-                        game_state[k] += v if isinstance(v, (int, float)) else 0
-                    elif k == "insurance":
-                        game_state["insurance"] = v
+        for i, scheme in enumerate(eligible_schemes):
+            # VISUAL CARD FOR SCHEME
+            with st.sidebar.container():
+                st.markdown(f"**{scheme['name']}**")
+                st.caption(f"ℹ️ {scheme['desc']}") # The simple rural explanation
+                
+                if st.button(f"✅ Claim Benefit", key=f"claim_{i}_{scheme['name']}", use_container_width=True):
+                    # Apply scheme effects
+                    for k, v in scheme.get("effects", {}).items():
+                        if k in game_state:
+                            game_state[k] += v if isinstance(v, (int, float)) else 0
+                        elif k == "insurance":
+                            game_state["insurance"] = v
 
-                game_state["claimed_schemes"].append(scheme['name'])
+                    game_state["claimed_schemes"].append(scheme['name'])
 
-                # Set sidebar feedback
-                feedback_parts = []
-                for k, v in scheme.get("effects", {}).items():
-                    if isinstance(v, (int, float)):
-                        feedback_parts.append(f"₹{v:,} added to {k}")
-                    elif k == "insurance":
-                        feedback_parts.append(f"Insurance ACTIVE")
-                game_state["last_scheme_feedback"] = f"✅ {scheme['name']} claimed! {'; '.join(feedback_parts)}"
+                    # Set feedback text
+                    feedback_parts = []
+                    for k, v in scheme.get("effects", {}).items():
+                        if isinstance(v, (int, float)):
+                            feedback_parts.append(f"₹{v:,} added to {k}")
+                        elif k == "insurance":
+                            feedback_parts.append(f"Insurance ACTIVE")
+                    game_state["last_scheme_feedback"] = f"🎉 {scheme['name']} Approved! {'; '.join(feedback_parts)}"
 
-                st.rerun()
+                    st.rerun()
+                st.markdown("---") # Separator between schemes
 
     else:
-        st.sidebar.info("No schemes currently available for your status.")
+        st.sidebar.info("No new schemes available at this level. Keep playing!")
 
     # Display scheme feedback if any
     if game_state.get("last_scheme_feedback"):
-        st.sidebar.success(game_state["last_scheme_feedback"])
+        st.toast(game_state["last_scheme_feedback"], icon="🎉")
         # Reset feedback after showing
         game_state["last_scheme_feedback"] = None
