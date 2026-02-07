@@ -39,7 +39,7 @@ conn.commit()
 # --- LOGIN / LOGOUT ---
 if st.session_state.username:
     st.sidebar.write(f"Logged in as: **{st.session_state.username}**")
-    if st.sidebar.button("Logout"):
+    if st.sidebar.button("Logout", key="btn5"):
         st.session_state.username = None
         st.session_state.cash = 10000.0
         st.session_state.transactions = []
@@ -47,7 +47,7 @@ if st.session_state.username:
 else:
     st.sidebar.header("Login / Signup")
     username_input = st.sidebar.text_input("Username", key="username_input")
-    if st.sidebar.button("Login / Signup"):
+    if st.sidebar.button("Login / Signup", key="btn3"):
         if username_input:
             st.session_state.username = username_input
             c.execute("SELECT cash FROM users WHERE username=?", (username_input,))
@@ -173,10 +173,19 @@ if portfolio:
 
 # --- NAVIGATION BACK TO HOME ---
 st.markdown("---")
-if st.button("🗺️ Return to Game Map", use_container_width=True):
+if st.button("🗺️ Return to Game Map", use_container_width=True, key="btn1"):
     # SYNC: Push current cash and portfolio value back to the game HUD before leaving
     if "game" in st.session_state:
         st.session_state.game['cash'] = int(st.session_state.cash)
         st.session_state.game['investments'] = int(total_stock_value)
         st.session_state.game['state'] = "MAP"
+    st.rerun()
+
+# Place this at the very bottom of investmentsim.py
+st.markdown("---")
+if st.button("🗺️ Return to Game Map", use_container_width=True, key="btn2"):
+    # Update the core game cash from the simulator's current cash
+    st.session_state.game['cash'] = int(st.session_state.cash)
+    # Return to map state
+    st.session_state.game['state'] = "MAP"
     st.rerun()
