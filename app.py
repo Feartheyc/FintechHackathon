@@ -1,5 +1,6 @@
 import streamlit as st
 import streamlit.components.v1 as components
+import pandas as pd
 from sidebar import render_sidebar
 from utils import img_to_base64, play_narration, render_interactive_dialogue
 from engine import init_game, try_apply_effects
@@ -11,11 +12,9 @@ from config import apply_custom_css
 # ==========================================
 st.set_page_config(page_title="Financial Journey", layout="wide", page_icon="🌏", initial_sidebar_state="expanded")
 
-# Initialize Session State
 if "game" not in st.session_state: 
     st.session_state.game = {"state": "INTRO"}
 
-# APPLY CSS
 apply_custom_css()
 
 # ==========================================
@@ -43,6 +42,18 @@ def render_hud_content(p):
     </div>
     """
 
+def render_mini_map(persona, current_lvl):
+    total_levels = len(STUDENT_EVENTS) if persona == "Student" else len(STATIC_CAMPAIGNS.get(persona, {}))
+    dots_html = ""
+    for i in range(total_levels):
+        status = "completed" if i < current_lvl else ("active" if i == current_lvl else "pending")
+        content = "✓" if i < current_lvl else ""
+        dots_html += f"<div class='step {status}'>{content}</div>"
+        if i < total_levels - 1:
+            line_status = "line-active" if i < current_lvl else "line-pending"
+            dots_html += f"<div class='step-line {line_status}'></div>"
+    return f"<div class='progress-wrapper'>{dots_html}</div>"
+
 # ==========================================
 # 4. SCENE RENDERING
 # ==========================================
@@ -66,20 +77,16 @@ def render_map():
     p = st.session_state.game
     current_lvl = p['event_index']
     st.markdown(render_hud_content(p), unsafe_allow_html=True)
-    
     c1, c2 = st.columns([3, 1])
     with c1:
-        # Map Display Logic (Condensed for brevity)
         persona_map_files = {"Farmer": "assets/map_farmer.png", "Student": "assets/map_student.png", "Employee": "assets/map_business.png", "Founder": "assets/map_startup.png"}
         target_map_file = persona_map_files.get(p['persona'], "assets/level_map.png")
         current_map_img = img_to_base64(target_map_file) or img_to_base64("assets/level_map.png")
-
         path = [(10, 80), (20, 70), (30, 75), (40, 60), (50, 50), (60, 45), (70, 55), (80, 40), (90, 30)]
         svg = f'<polyline points="{" ".join([f"{x*8},{y*6}" for x,y in path])}" fill="none" stroke="#ffd966" stroke-width="6" stroke-dasharray="10,5"/>'
         for idx, (bx, by) in enumerate(path):
             color = "#4ade80" if idx < current_lvl else ("#ff5252" if idx == current_lvl else "#64748b")
             svg += f'<circle cx="{bx*8}" cy="{by*6}" r="{15 if idx==current_lvl else 10}" fill="{color}" stroke="white" stroke-width="2"></circle>'
-        
         components.html(f"<div style=\"width:100%; height:600px; background-image: url('data:image/png;base64,{current_map_img}'); background-size: cover; border-radius:12px;\"><svg viewBox='0 0 800 600' preserveAspectRatio='none'>{svg}</svg></div>", height=620)
             
     with c2:
@@ -91,40 +98,71 @@ def render_map():
                 st.rerun()
         else:
             if st.button("🏆 Finish", type="primary"): 
-                st.session_state.game['state'] = "END"
-                st.rerun()
-        
+                st.session_state.game['state'] = "END"; st.rerun()
         st.markdown("---")
-        # --- NAVIGATION TO INVESTMENTSIM ---
         st.markdown("### 🏛️ NSE Terminal")
         if st.button("📈 Open Stock Market", use_container_width=True):
+            # Pass game cash and persona to simulator session state
+            st.session_state.cash = float(p['cash'])
+            st.session_state.username = p['persona']
             st.session_state.game['state'] = "MARKET"
             st.rerun()
-
         st.markdown("---")
         if st.button("⬅ Change Role"): 
-            st.session_state.game['state'] = "INTRO"
-            st.rerun()
+            st.session_state.game['state'] = "INTRO"; st.rerun()
+
+def render_scene():
+    p = st.session_state.game
+    evt = get_event_data(p['persona'], p['event_index'])
+    if not evt: p['state'] = "MAP"; st.rerun(); return
+    play_narration(evt['story'])
+    render_sidebar(p)
+    _, c2, _ = st.columns([1, 4, 1])
+    with c2:
+        st.markdown(render_hud_content(p), unsafe_allow_html=True)
+        st.markdown(render_mini_map(p['persona'], p['event_index']), unsafe_allow_html=True)
+        st.markdown('<div class="scene-card">', unsafe_allow_html=True)
+        if p.get('last_feedback'):
+            st.markdown(f"<div class='game-alert alert-{p['feedback_type']}'>{p['last_feedback']}</div>", unsafe_allow_html=True)
+            p['last_feedback'] = None
+        render_interactive_dialogue(evt["avatar"], evt["npc"], evt["story"])
+        if "thought" in evt: st.markdown(f'<div class="thought-container"><div class="thought-bubble">💭 {evt["thought"]}</div></div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+        if "advisor" in evt:
+            with st.expander("💡 Ask Financial Advisor"): st.markdown(f"**Expert Recommendation:**\n\n{evt['advisor']}")
+        if "choices" in evt:
+            cols = st.columns(len(evt["choices"]))
+            for i, (txt, eff) in enumerate(evt["choices"].items()):
+                with cols[i]:
+                    if st.button(f"{txt}{format_effects(eff)}", key=f"btn_{p['event_index']}_{i}"):
+                        msg = eff.pop('__msg', None)
+                        success, s_msg = try_apply_effects(eff)
+                        p['last_feedback'], p['feedback_type'] = (msg or s_msg), ("good" if success else "bad")
+                        if success: p['event_index'] += 1
+                        st.rerun()
+        elif "auto" in evt:
+            if st.button("Continue ➡️", type="primary"): try_apply_effects(evt["auto"]); p['event_index'] += 1; st.rerun()
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("🗺️ Map"): p['state'] = "MAP"; st.rerun()
 
 # ==========================================
 # 5. MAIN LOOP
 # ==========================================
 state = st.session_state.game['state']
-
 if state == "INTRO": 
     render_persona_selection()
 elif state == "MAP": 
     render_map()
 elif state == "PLAYING": 
-    render_scene() # (Assuming you have render_scene from your previous code)
+    render_scene()
 elif state == "MARKET":
-    # This runs the content of your investmentsim.py
-    # We use exec() to run the file while keeping it in the same directory
-    with open("investmentsim.py", encoding="utf-8") as f:
-        exec(f.read())
+    try:
+        with open("investmentsim.py", encoding="utf-8") as f:
+            exec(f.read())
+    except FileNotFoundError:
+        st.error("investmentsim.py not found! Move it out of 'pages/' to the root folder.")
+        if st.button("Back to Map"): st.session_state.game['state'] = "MAP"; st.rerun()
 elif state == "END":
     st.balloons()
     st.markdown("<h1>Journey Complete</h1>", unsafe_allow_html=True)
-    if st.button("↺ Restart"): 
-        st.session_state.game = {"state": "INTRO"}
-        st.rerun()
+    if st.button("↺ Restart"): st.session_state.game = {"state": "INTRO"}; st.rerun()
