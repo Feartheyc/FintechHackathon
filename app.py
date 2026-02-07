@@ -5,20 +5,107 @@ from utils import img_to_base64, play_narration, render_interactive_dialogue
 from engine import init_game, try_apply_effects
 from content import get_event_data, STATIC_CAMPAIGNS, STUDENT_EVENTS
 from config import apply_custom_css
+from phishing_game import render_phishing_game
 
 # ==========================================
 # 1. APP CONFIGURATION
 # ==========================================
-st.set_page_config(page_title="Financial Journey", layout="wide", page_icon="🌏", initial_sidebar_state="expanded")
+st.set_page_config(page_title="Financial Journey", layout="wide", page_icon="🌏", initial_sidebar_state="collapsed")
+MAP_IMG = img_to_base64("assets/level_map.png")
 
-# Initialize Session State
-if "game" not in st.session_state: st.session_state.game = {"state": "INTRO"}
+# CHANGED: Initial state is now MAIN_MENU
+if "game" not in st.session_state: st.session_state.game = {"state": "MAIN_MENU"}
 
 # APPLY CSS
 apply_custom_css()
 
 # ==========================================
-# 3. HELPERS
+# 2. MENU RENDERING FUNCTIONS (NEW)
+# ==========================================
+def render_main_menu():
+    # Using the CSS classes from your config.py
+    st.markdown('<div class="menu-title">🌏 ARTH-SAGAR</div>', unsafe_allow_html=True)
+    st.markdown('<div class="menu-subtitle">A Financial Literacy RPG Journey</div>', unsafe_allow_html=True)
+    
+    # Spacing
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Centered Buttons
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button("🚀 START JOURNEY"):
+            st.session_state.game['state'] = "INTRO"
+            st.rerun()
+        
+        st.markdown("<div style='height:15px'></div>", unsafe_allow_html=True)
+        
+        if st.button("📜 HOW TO PLAY"):
+            st.session_state.game['state'] = "TUTORIAL"
+            st.rerun()
+            
+        st.markdown("<div style='height:15px'></div>", unsafe_allow_html=True)
+
+        if st.button("🛡️ CYBER SHIELD TRAINING"):
+            st.session_state.game['state'] = "CYBER_GAME"
+            st.rerun()
+
+        st.markdown("<div style='height:15px'></div>", unsafe_allow_html=True)
+
+        if st.button("❤️ CREDITS"):
+            st.session_state.game['state'] = "CREDITS"
+            st.rerun()
+
+def render_credits():
+    st.markdown('<div class="menu-title" style="font-size: 3rem;">CREDITS</div>', unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.markdown("""
+            <div class="menu-card">
+                <h2 style="color:#4ade80;">Developed Team Arth-Sagar</h2>
+                <p style="color:#94a3b8;">Created for the <b>FinTech Hackathon 2026</b></p>
+                <hr style="border-color: #334155;">
+                <p style="text-align:left;">
+                <b>• Tech Stack:</b> Python, Streamlit, Pandas, SQLite<br>
+                <b>• Features:</b> RPG Gameplay, Stock Simulator, Cyber Safety<br>
+                <b>• Mission:</b> Making financial literacy accessible to rural India.
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("⬅ BACK TO MENU"):
+            st.session_state.game['state'] = "MAIN_MENU"
+            st.rerun()
+
+def render_tutorial():
+    st.markdown('<div class="menu-title" style="font-size: 3rem;">HOW TO PLAY</div>', unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.markdown("""
+            <div class="menu-card" style="text-align: left;">
+                <h3 style="color:#facc15;">1. Choose Your Persona</h3>
+                <p>Select from Farmer, Student, Employee, or Founder. Each has unique financial challenges.</p>
+                
+                <h3 style="color:#facc15;">2. Make Smart Choices</h3>
+                <p>Navigate real-life scenarios. Every decision affects your <b>Cash</b>, <b>Savings</b>, and <b>Stress</b>.</p>
+                
+                <h3 style="color:#facc15;">3. Use Your Tools</h3>
+                <p>Check the <b>Stock Market Simulator</b> to grow wealth or the <b>Cyber Shield</b> to learn security.</p>
+                
+                <h3 style="color:#facc15;">4. Win the Game</h3>
+                <p>Survive the debt traps and build the highest Net Worth to win!</p>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("⬅ BACK TO MENU"):
+            st.session_state.game['state'] = "MAIN_MENU"
+            st.rerun()
+
+# ==========================================
+# 3. EXISTING HELPERS (Unchanged)
 # ==========================================
 def format_effects(effects):
     changes = []
@@ -42,7 +129,6 @@ def render_hud_content(p):
     </div>
     """
 
-# --- MINI-MAP RENDERER ---
 def render_mini_map(persona, current_lvl):
     if persona == "Student":
         total_levels = len(STUDENT_EVENTS)
@@ -52,14 +138,11 @@ def render_mini_map(persona, current_lvl):
     dots_html = ""
     for i in range(total_levels):
         if i < current_lvl:
-            status = "completed"
-            content = "✓"
+            status = "completed"; content = "✓"
         elif i == current_lvl:
-            status = "active"
-            content = ""
+            status = "active"; content = ""
         else:
-            status = "pending"
-            content = ""
+            status = "pending"; content = ""
             
         dots_html += f"<div class='step {status}'>{content}</div>"
         
@@ -70,49 +153,29 @@ def render_mini_map(persona, current_lvl):
     return f"""
 <style>
     .progress-wrapper {{
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        padding: 15px 20px;
-        margin-bottom: 20px;
+        display: flex; align-items: center; justify-content: center;
+        width: 100%; padding: 15px 20px; margin-bottom: 20px;
         background: linear-gradient(145deg, #1e293b, #0f172a);
-        border: 1px solid #334155;
-        border-radius: 20px;
+        border: 1px solid #334155; border-radius: 20px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     }}
     .step {{
-        width: 24px; height: 24px;
-        border-radius: 50%;
+        width: 24px; height: 24px; border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
-        font-weight: bold; font-size: 12px;
-        z-index: 2;
-        transition: all 0.3s;
+        font-weight: bold; font-size: 12px; z-index: 2; transition: all 0.3s;
     }}
     .step.completed {{ background: #4ade80; color: #064e3b; box-shadow: 0 0 8px rgba(74, 222, 128, 0.4); }}
-    .step.active {{ 
-        background: #ff5252; border: 2px solid white; 
-        box-shadow: 0 0 12px rgba(255, 82, 82, 0.8); 
-        transform: scale(1.3);
-    }}
+    .step.active {{ background: #ff5252; border: 2px solid white; box-shadow: 0 0 12px rgba(255, 82, 82, 0.8); transform: scale(1.3); }}
     .step.pending {{ background: #334155; border: 2px solid #475569; }}
-    
-    .step-line {{
-        flex-grow: 1;
-        height: 4px;
-        margin: 0 2px;
-        border-radius: 2px;
-    }}
+    .step-line {{ flex-grow: 1; height: 4px; margin: 0 2px; border-radius: 2px; }}
     .line-active {{ background: #4ade80; }}
     .line-pending {{ background: #334155; }}
 </style>
-<div class="progress-wrapper">
-    {dots_html}
-</div>
+<div class="progress-wrapper">{dots_html}</div>
 """
 
 # ==========================================
-# 4. SCENE RENDERING
+# 4. SCENE RENDERING (Updated to link back to Main Menu)
 # ==========================================
 def render_persona_selection():
     st.markdown("<h1 style='text-align:center; font-size: 3rem;'>🌏 Arth-Sagar</h1>", unsafe_allow_html=True)
@@ -129,6 +192,11 @@ def render_persona_selection():
             st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
             if st.button(char["btn"], key=f"sel_{char['role']}", use_container_width=True):
                 st.session_state.game = init_game(char["role"]); st.rerun()
+    
+    st.markdown("<br><hr>", unsafe_allow_html=True)
+    if st.button("⬅ Back to Main Menu", use_container_width=True):
+        st.session_state.game['state'] = "MAIN_MENU"
+        st.rerun()
 
 def render_map():
     p = st.session_state.game
@@ -138,44 +206,33 @@ def render_map():
     
     c1, c2 = st.columns([3, 1])
     with c1:
-        # --- DYNAMIC MAP IMAGE LOGIC ---
+        # Dynamic Map Image Logic
         persona_map_files = {
             "Farmer": "assets/map_farmer.png",
             "Student": "assets/map_student.png",
             "Employee": "assets/map_business.png",
             "Founder": "assets/map_startup.png"
         }
-        
-        # Get the specific map for the current persona, fallback to default level_map if missing
         target_map_file = persona_map_files.get(p['persona'], "assets/level_map.png")
         current_map_img = img_to_base64(target_map_file)
-        
-        # If the specific map didn't load (empty base64), fallback to generic level_map.png
-        if not current_map_img:
-            current_map_img = img_to_base64("assets/level_map.png")
+        if not current_map_img: current_map_img = img_to_base64("assets/level_map.png")
 
-        # SVG Path Logic
         path = [(10, 80), (20, 70), (30, 75), (40, 60), (50, 50), (60, 45), (70, 55), (80, 40), (90, 30)]
         svg = f'<polyline points="{" ".join([f"{x*8},{y*6}" for x,y in path])}" fill="none" stroke="#ffd966" stroke-width="6" stroke-dasharray="10,5"/>'
         for idx, (bx, by) in enumerate(path):
             color = "#4ade80" if idx < current_lvl else ("#ff5252" if idx == current_lvl else "#64748b")
             svg += f'<circle cx="{bx*8}" cy="{by*6}" r="{15 if idx==current_lvl else 10}" fill="{color}" stroke="white" stroke-width="2"><animate attributeName="r" values="15;18;15" dur="1.5s" repeatCount="indefinite" /></circle>' if idx == current_lvl else f'<circle cx="{bx*8}" cy="{by*6}" r="10" fill="{color}" stroke="white" stroke-width="2"></circle>'
         
-        # Inject the dynamic 'current_map_img' into the CSS
         components.html(f"""
             <style>
                 body {{ margin: 0; overflow: hidden; }} 
                 #map-container {{ 
                     width: 100%; height: 600px; 
                     background-image: url('data:image/png;base64,{current_map_img}'); 
-                    background-size: cover; 
-                    background-position: center;
-                    border-radius: 12px; 
+                    background-size: cover; background-position: center; border-radius: 12px; 
                 }}
             </style>
-            <div id='map-container'>
-                <svg viewBox='0 0 800 600' preserveAspectRatio='none'>{svg}</svg>
-            </div>
+            <div id='map-container'><svg viewBox='0 0 800 600' preserveAspectRatio='none'>{svg}</svg></div>
             """, height=620)
             
     with c2:
@@ -197,9 +254,7 @@ def render_scene():
     _, c2, _ = st.columns([1, 4, 1])
     with c2:
         st.markdown(render_hud_content(p), unsafe_allow_html=True)
-        
         st.markdown(render_mini_map(p['persona'], p['event_index']), unsafe_allow_html=True)
-        
         st.markdown('<div class="scene-card">', unsafe_allow_html=True)
         if p['last_feedback']:
             st.markdown(f"<div class='game-alert alert-{p['feedback_type']}'>{p['last_feedback']}</div>", unsafe_allow_html=True)
@@ -210,11 +265,9 @@ def render_scene():
         if "thought" in evt: st.markdown(f'<div class="thought-container"><div class="thought-bubble">💭 {evt["thought"]}</div></div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
         
-        # --- FINANCIAL ADVISOR SECTION ---
         if "advisor" in evt:
             with st.expander("💡 Ask Financial Advisor"):
                 st.markdown(f"**Expert Recommendation:**\n\n{evt['advisor']}")
-        # ---------------------------------
 
         if "choices" in evt:
             cols = st.columns(len(evt["choices"]))
@@ -235,12 +288,24 @@ def render_scene():
 # 5. MAIN LOOP
 # ==========================================
 state = st.session_state.game['state']
-if state == "INTRO": render_persona_selection()
-elif state == "MAP": render_map()
-elif state == "PLAYING": render_scene()
+
+if state == "MAIN_MENU":
+    render_main_menu()
+elif state == "CREDITS":
+    render_credits()
+elif state == "TUTORIAL":
+    render_tutorial()
+elif state == "INTRO": 
+    render_persona_selection()
+elif state == "CYBER_GAME": 
+    render_phishing_game()
+elif state == "MAP": 
+    render_map()
+elif state == "PLAYING": 
+    render_scene()
 elif state == "END":
     p = st.session_state.game
     nw = (p['cash'] + p['savings'] + p['investments']) - p['loan']
     st.balloons()
     st.markdown(f"<div style='text-align:center; padding:40px; background: rgba(15, 23, 42, 0.8); border-radius:20px; border: 1px solid #334155; margin-top: 50px;'><h1>Journey Complete</h1><h2>Net Worth: ₹{nw:,}</h2></div>", unsafe_allow_html=True)
-    if st.button("↺ Restart"): st.session_state.game = {"state": "INTRO"}; st.rerun()
+    if st.button("↺ Restart"): st.session_state.game = {"state": "MAIN_MENU"}; st.rerun()
