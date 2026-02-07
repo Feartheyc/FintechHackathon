@@ -109,28 +109,70 @@ SCHEMES = {
         },
     ],
     "Founder": [
-        {
-            "name": "Startup India Seed Fund",
-            "desc": "Govt gives money to start your business idea without taking shares.",
-            "condition": lambda p: p['cash'] < 50000,
-            "levels": [0, 1],
-            "effects": {"cash": 50000, "confidence": 10}
-        },
-        {
-            "name": "MUDRA Loan",
-            "desc": "Easy business loan up to ₹10 Lakhs without keeping your house as guarantee.",
-            "condition": lambda p: p['loan'] == 0,
-            "levels": [1, 2, 3],
-            "effects": {"cash": 100000, "loan": 100000}
-        },
-        {
-            "name": "Tax Holiday",
-            "desc": "You don't have to pay Income Tax for the first 3 years of profit.",
-            "condition": lambda p: True,
-            "levels": [3, 4, 5],
-            "effects": {"savings": 20000}
-        }
-    ]
+    {
+        "name": "Startup India Seed Fund",
+        "desc": "Govt gives money to start your business idea without taking shares.",
+        "condition": lambda p: p['cash'] < 50000,
+        "levels": [0, 1],
+        "effects": {"cash": 50000, "confidence": 10}
+    },
+    {
+        "name": "MUDRA Loan",
+        "desc": "Easy business loan up to ₹10 Lakhs without keeping your house as guarantee.",
+        "condition": lambda p: p['loan'] == 0,
+        "levels": [1, 2, 3],
+        "effects": {"cash": 100000, "loan": 100000}
+    },
+    {
+        "name": "Tax Holiday",
+        "desc": "You don't have to pay Income Tax for the first 3 years of profit.",
+        "condition": lambda p: True,
+        "levels": [3, 4, 5],
+        "effects": {"savings": 20000}
+    },
+    {
+        "name": "Angel Investor Boost",
+        "desc": "An angel investor offers ₹20 Lakhs for 10% equity.",
+        "condition": lambda p: p['confidence'] > 10,
+        "levels": [2, 3],
+        "effects": {"cash": 2000000, "confidence": 15, "equity": -10}
+    },
+    {
+        "name": "Government R&D Grant",
+        "desc": "Govt provides grant for product innovation and tech development.",
+        "condition": lambda p: p['tech_skill'] >= 5,
+        "levels": [1, 2, 3],
+        "effects": {"cash": 500000, "tech_skill": 2}
+    },
+    {
+        "name": "Incubator Support",
+        "desc": "Get mentorship, workspace, and initial seed funding from an incubator.",
+        "condition": lambda p: p['stress'] < 50,
+        "levels": [0, 1, 2],
+        "effects": {"cash": 200000, "confidence": 10, "stress": -10}
+    },
+    {
+        "name": "Equity Crowdfunding",
+        "desc": "Raise small amounts from multiple investors via crowdfunding platforms.",
+        "condition": lambda p: p['cash'] < 200000,
+        "levels": [3, 4],
+        "effects": {"cash": 1000000, "stress": 5, "equity": -5}
+    },
+    {
+        "name": "Startup Accelerator",
+        "desc": "Join a 3-month accelerator to get guidance, networking, and funding.",
+        "condition": lambda p: p['cash'] < 100000,
+        "levels": [1, 2, 3],
+        "effects": {"cash": 300000, "confidence": 15, "stress": 10}
+    },
+    {
+        "name": "Government Export Incentive",
+        "desc": "Receive incentives for selling products internationally.",
+        "condition": lambda p: p['level'] >= 5,
+        "levels": [5, 6, 7],
+        "effects": {"cash": 1000000, "confidence": 10}
+    }
+]
 }
 
 # -----------------------------
