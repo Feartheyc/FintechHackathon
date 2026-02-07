@@ -170,10 +170,10 @@ def render_persona_selection():
     st.markdown("<h1 style='text-align:center; font-size: 3rem;'>🌏 Arth-Sagar</h1>", unsafe_allow_html=True)
     c1, c2, c3, c4 = st.columns(4)
     chars = [
-        {"col": c1, "role": "Farmer", "img": "https://cdn-icons-png.flaticon.com/512/4955/4955737.png", "desc": "Crops and weather risks.", "btn": "🚜 Select Farmer"},
+        {"col": c1, "role": "Farmer", "img": "https://cdn-icons-png.flaticon.com/512/4825/4825021.png", "desc": "Crops and weather risks.", "btn": "🚜 Select Farmer"},
         {"col": c2, "role": "Employee", "img": "https://cdn-icons-png.flaticon.com/512/4825/4825038.png", "desc": "Salary and office politics.", "btn": "👔 Select Employee"},
-        {"col": c3, "role": "Student", "img": "https://cdn-icons-png.flaticon.com/512/5853/5853761.png", "desc": "Pocket money and choices.", "btn": "🎓 Select Student"},
-        {"col": c4, "role": "Founder", "img": "https://cdn-icons-png.flaticon.com/512/1995/1995669.png", "desc": "High risk, chasing unicorns.", "btn": "🚀 Select Founder"}
+        {"col": c3, "role": "Student", "img": "https://cdn-icons-png.flaticon.com/512/4825/4825108.png", "desc": "Pocket money and choices.", "btn": "🎓 Select Student"},
+        {"col": c4, "role": "Founder", "img": "https://cdn-icons-png.flaticon.com/512/4825/4825072.png", "desc": "High risk, chasing unicorns.", "btn": "🚀 Select Founder"}
     ]
     for char in chars:
         with char["col"]:
