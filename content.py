@@ -35,7 +35,7 @@ STATIC_CAMPAIGNS = {
             "text": "Ramesh! Why run to the bank? Take ₹20,000 cash now. No paperwork.", 
             "thought": "Bank takes days... but Seth's interest is deadly. The rain is coming soon.", 
             "advisor": "Avoid informal loans (Moneylenders) at all costs. They charge 50%+ interest. The Bank (KCC) charges only 7%. A small delay is better than a debt trap.",
-            "choices": [c("Take Seth's Cash", {"cash": 20000, "loan": 20000, "add_flag": "predatory_loan"}, "Debt Trap: 50% Interest rate!"), c("Go to Bank (KCC)", {"cash": 20000, "loan": 20000, "confidence": 10}, "Safe Loan: 7% Interest.")] 
+            "choices": [c("Take Seth's Cash", {"cash": 20000, "add_flag": "predatory_loan"}, "Debt Trap: 50% Interest rate!"), c("Go to Bank (KCC)", {"loan": 20000, "confidence": 10}, "Safe Loan: 7% Interest.")] 
         },
         1: { 
             "title": "Seed Quality", "npc": "Shopkeeper", "avatar": "🏪", 
@@ -52,11 +52,11 @@ STATIC_CAMPAIGNS = {
             "choices": [c("Sell Here", {"cash": 30000, "regret": 10}, "Quick cash."), c("Go to Mandi", {"cash": 45000, "stress": 5}, "Hard work pays off.")] 
         },
         3: { 
-            "title": "Loan Repayment", "npc": "Bank Manager", "avatar": "🏦", 
-            "text": "Namaste Ramesh. Your crop loan is due. Can you clear it today?", 
+            "title": "Insurance deposit", "npc": "Bank Manager", "avatar": "🏦", 
+            "text": "Namaste Ramesh. Your harvest insurance deposit is due. Can you clear it today?", 
             "thought": "I have the cash, but what if an emergency comes up?", 
             "advisor": "Always prioritize clearing debt when you have cash. Interest compounds over time. Being debt-free reduces stress and improves credit scores for future loans.",
-            "choices": [c("Repay Full", {"cash": -20000, "loan": -20000, "confidence": 10}, "Debt Free."), c("Delay", {"stress": 10, "loan": 2000}, "Interest piling up.")] 
+            "choices": [c("Repay Full", {"cash": -20000, "confidence": 10}, "Debt Free."), c("Delay", {"stress": 10, "loan": 2000}, "Interest piling up.")] 
         },
         4: { 
             "title": "Daughter's School", "npc": "Wife", "avatar": "👩", 
@@ -84,7 +84,7 @@ STATIC_CAMPAIGNS = {
             "text": "Install a Solar Pump for ₹50,000? Govt gives 40% subsidy.", 
             "thought": "It saves diesel money forever, but the upfront cost is high.", 
             "advisor": "With a 40% subsidy, the Solar Pump pays for itself in diesel savings within 2 years. This is a high-return capital investment.",
-            "choices": [c("Install Solar", {"cash": -30000, "confidence": 15}, "Free Electricity!"), c("Stick to Diesel", {"cash": -2000}, "High Running Cost.")] 
+            "choices": [c("Install Solar", {"cash": -50000, "confidence": 15}, "Free Electricity!"), c("Stick to Diesel", {"cash": -2000}, "High Running Cost.")] 
         },
         8: { 
             "title": "Organic Farming", "npc": "NGO Worker", "avatar": "🌱", 
@@ -107,7 +107,7 @@ STATIC_CAMPAIGNS = {
             "text": "Flash Sale! The iPhone 16 Pro Max is finally here. EMI starts at ₹5000!", 
             "thought": "My current phone works fine, but everyone at the office has the new one...", 
             "advisor": "Never take a loan (EMI) for a depreciating asset like a phone. Its value drops the moment you buy it. Stick to the old phone and invest that EMI amount instead.",
-            "choices": [c("Buy on EMI", {"loan": 80000, "regret": 10}, "Costly status."), c("Keep Old Phone", {"savings": 5000}, "Saved money.")] 
+            "choices": [c("Buy on EMI", {"loan": 80000, "regret": 10}, "Costly status."), c("Upgrade Old Phone", {"cash": -5000}, "Saved money.")] 
         },
         2: { 
             "title": "Car Purchase", "npc": "Family", "avatar": "🚗", 
