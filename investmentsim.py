@@ -150,6 +150,24 @@ if portfolio:
 else:
     st.write("Your portfolio is empty.")
 
+if portfolio:
+    st.header("📊 Portfolio Value Over Time")
+    timeline = sorted(set(t["date"] for t in st.session_state.transactions))
+    plot_df = pd.DataFrame(index=timeline)
+
+    for stock in portfolio.keys():
+        values = []
+        cumulative_value = 0
+        for date in timeline:
+            txns_on_date = [t for t in st.session_state.transactions if t["stock"] == stock and t["date"] == date]
+            daily_value = sum(t["qty"] * t["price"] for t in txns_on_date)
+            cumulative_value += daily_value
+            values.append(cumulative_value)
+        plot_df[stock] = values
+
+    plot_df["Total"] = plot_df[list(portfolio.keys())].sum(axis=1)
+    st.line_chart(plot_df)
+
 # --- NAVIGATION BACK TO HOME ---
 st.markdown("---")
 
