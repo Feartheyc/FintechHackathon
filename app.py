@@ -6,6 +6,7 @@ from utils import img_to_base64, play_narration, render_interactive_dialogue
 from engine import init_game, try_apply_effects
 from content import get_event_data, STATIC_CAMPAIGNS, STUDENT_EVENTS
 from config import apply_custom_css
+from leaderboard import render_leaderboard_ui
 
 # ==========================================
 # 1. APP CONFIGURATION
@@ -43,17 +44,49 @@ def render_hud_content(p):
     """
 
 def render_mini_map(persona, current_lvl):
-    total_levels = len(STUDENT_EVENTS) if persona == "Student" else len(STATIC_CAMPAIGNS.get(persona, {}))
+    if persona == "Student":
+        total_levels = len(STUDENT_EVENTS)
+    else:
+        total_levels = len(STATIC_CAMPAIGNS.get(persona, {}))
+    
     dots_html = ""
     for i in range(total_levels):
-        status = "completed" if i < current_lvl else ("active" if i == current_lvl else "pending")
-        content = "✓" if i < current_lvl else ""
+        if i < current_lvl:
+            status = "completed"; content = "✓"
+        elif i == current_lvl:
+            status = "active"; content = ""
+        else:
+            status = "pending"; content = ""
+            
         dots_html += f"<div class='step {status}'>{content}</div>"
+        
         if i < total_levels - 1:
             line_status = "line-active" if i < current_lvl else "line-pending"
             dots_html += f"<div class='step-line {line_status}'></div>"
-    return f"<div class='progress-wrapper'>{dots_html}</div>"
 
+    return f"""
+<style>
+    .progress-wrapper {{
+        display: flex; align-items: center; justify-content: center;
+        width: 100%; padding: 15px 20px; margin-bottom: 20px;
+        background: linear-gradient(145deg, #1e293b, #0f172a);
+        border: 1px solid #334155; border-radius: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }}
+    .step {{
+        width: 24px; height: 24px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: bold; font-size: 12px; z-index: 2; transition: all 0.3s;
+    }}
+    .step.completed {{ background: #4ade80; color: #064e3b; box-shadow: 0 0 8px rgba(74, 222, 128, 0.4); }}
+    .step.active {{ background: #ff5252; border: 2px solid white; box-shadow: 0 0 12px rgba(255, 82, 82, 0.8); transform: scale(1.3); }}
+    .step.pending {{ background: #334155; border: 2px solid #475569; }}
+    .step-line {{ flex-grow: 1; height: 4px; margin: 0 2px; border-radius: 2px; }}
+    .line-active {{ background: #4ade80; }}
+    .line-pending {{ background: #334155; }}
+</style>
+<div class="progress-wrapper">{dots_html}</div>
+"""
 # ==========================================
 # 4. SCENE RENDERING
 # ==========================================
@@ -162,7 +195,12 @@ elif state == "MARKET":
     except FileNotFoundError:
         st.error("investmentsim.py not found! Move it out of 'pages/' to the root folder.")
         if st.button("Back to Map"): st.session_state.game['state'] = "MAP"; st.rerun()
-elif state == "END":
+elif state == "END":    
+    p = st.session_state.game
+    nw = (p['cash'] + p['savings'] + p['investments']) - p['loan']
+    
     st.balloons()
-    st.markdown("<h1>Journey Complete</h1>", unsafe_allow_html=True)
-    if st.button("↺ Restart"): st.session_state.game = {"state": "INTRO"}; st.rerun()
+    st.markdown(f"<div style='text-align:center; padding:40px; background: rgba(15, 23, 42, 0.8); border-radius:20px; border: 1px solid #334155; margin-top: 50px;'><h1>Journey Complete</h1><h2>Net Worth: ₹{nw:,}</h2></div>", unsafe_allow_html=True)
+    
+    # Render leaderboard UI
+    render_leaderboard_ui(final_score=nw)   
