@@ -22,6 +22,7 @@ alpha_vantage
 
 transformers
 sentence-transformers
+translate
 
 langchain==0.1.16
 openai==0.28.1
