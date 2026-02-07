@@ -34,7 +34,7 @@ apply_custom_css()
 # 2. MENU RENDERING FUNCTIONS
 # ==========================================
 def render_main_menu():
-    st.markdown(f'<div class="menu-title">🌏 {t("ARTH-SAGAR")}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="menu-title">🌏 {t("FinLife")}</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="menu-subtitle">{t("A Financial Literacy RPG Journey")}</div>', unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -68,10 +68,11 @@ def render_credits():
     with col2:
         st.markdown(f"""
             <div class="menu-card">
-                <h2 style="color:#4ade80;">{t("Developed Team Arth-Sagar")}</h2>
+                <h2 style="color:#4ade80;">{t("Developed Team FinLife")}</h2>
                 <p style="color:#94a3b8;">{t("Created for the FinTech Hackathon 2026")}</p>
                 <hr style="border-color: #334155;">
                 <p style="text-align:left;">
+                <b>• {t("Team")}:</b> Yashvi Parikh, Yuvraj Chavan, Devansh Bakrania<br>
                 <b>• {t("Tech Stack")}:</b> Python, Streamlit, Pandas, SQLite<br>
                 <b>• {t("Features")}:</b> {t("RPG Gameplay, Stock Simulator, Cyber Safety")}<br>
                 <b>• {t("Mission")}:</b> {t("Making financial literacy accessible to rural India.")}
@@ -112,7 +113,7 @@ def format_effects(effects):
     for k in ["cash", "savings", "loan", "investments"]:
         if k in effects and effects[k] != 0:
             val, sign = effects[k], "+" if effects[k] > 0 else "-"
-            # Translate the keys for the labels
+            # TranslateTranslate the keys for the labels
             changes.append(f"{sign}₹{abs(val):,} {t(k.capitalize())}")
     return f" ({', '.join(changes)})" if changes else ""
 
@@ -148,7 +149,7 @@ def render_mini_map(persona, current_lvl):
 # 4. SCENE RENDERING
 # ==========================================
 def render_persona_selection():
-    st.markdown(f"<h1 style='text-align:center; font-size: 3rem;'>🌏 {t('Arth-Sagar')}</h1>", unsafe_allow_html=True)
+    st.markdown(f"<h1 style='text-align:center; font-size: 3rem;'>🌏 {t('FinLife')}</h1>", unsafe_allow_html=True)
     c1, c2, c3, c4 = st.columns(4)
     chars = [
         {"col": c1, "role": "Farmer", "img": "https://cdn-icons-png.flaticon.com/512/4825/4825021.png", "desc": "Crops and weather risks.", "btn": "🚜 Select Farmer"},
