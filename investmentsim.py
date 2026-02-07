@@ -16,7 +16,6 @@ if "username" not in st.session_state:
 conn = sqlite3.connect("portfolio.db", check_same_thread=False)
 c = conn.cursor()
 
-# Create tables if they don't exist
 c.execute("""
 CREATE TABLE IF NOT EXISTS users (
     username TEXT PRIMARY KEY,
@@ -43,7 +42,7 @@ if st.session_state.username:
         st.session_state.username = None
         st.session_state.cash = 10000.0
         st.session_state.transactions = []
-        st.rerun()  # refresh page to show login form
+        st.rerun()
 else:
     st.sidebar.header("Login / Signup")
     username_input = st.sidebar.text_input("Username", key="username_input")
@@ -59,18 +58,16 @@ else:
                     {"date": datetime.fromisoformat(r[0]), "stock": r[1], "qty": r[2], "price": r[3]}
                     for r in c.fetchall()
                 ]
-                st.success(f"Welcome back, {username_input}!")
             else:
                 st.session_state.cash = 10000.0
                 st.session_state.transactions = []
                 c.execute("INSERT INTO users(username, cash) VALUES (?, ?)", (username_input, st.session_state.cash))
                 conn.commit()
-                st.success(f"Account created for {username_input}!")
             st.rerun()
 
 # --- FETCH STOCK DATA ---
 @st.cache_data(ttl=600)
-def get_stock_data(tickers):
+def Stocks(tickers):
     data = {}
     for ticker in tickers:
         try:
@@ -79,12 +76,8 @@ def get_stock_data(tickers):
                 data[ticker] = df['Close']
         except Exception as e:
             st.warning(f"Error fetching {ticker}: {e}")
-    if not data:
-        st.error("No stock data could be fetched.")
-        return pd.DataFrame()
     return pd.DataFrame(data)
 
-# --- TICKERS AND PRICES ---
 TICKERS = [
     "RELIANCE.NS", "TCS.NS", "HDFCBANK.NS", "INFY.NS", "HINDUNILVR.NS",
     "ICICIBANK.NS", "KOTAKBANK.NS", "LT.NS", "SBIN.NS", "AXISBANK.NS",
@@ -95,7 +88,8 @@ TICKERS = [
     "COALINDIA.NS", "TATASTEEL.NS", "M&M.NS", "BPCL.NS", "BRITANNIA.NS",
     "IOC.NS", "CIPLA.NS", "SHREECEM.NS", "INDUSINDBK.NS", "EICHERMOT.NS"
 ]
-prices = get_stock_data(TICKERS)
+
+prices = Stocks(TICKERS)
 if prices.empty:
     st.stop()
 latest_prices = prices.iloc[-1]
@@ -118,7 +112,7 @@ if st.session_state.username:
                       (st.session_state.username, tx["date"].isoformat(), tx["stock"], tx["qty"], tx["price"]))
             c.execute("UPDATE users SET cash=? WHERE username=?", (st.session_state.cash, st.session_state.username))
             conn.commit()
-            st.success(f"Bought {quantity} shares of {stock_choice} at ₹{price:.2f}")
+            st.success(f"Bought {quantity} shares of {stock_choice}")
         elif action == "Sell":
             total_held = sum(t["qty"] for t in st.session_state.transactions if t["stock"] == stock_choice)
             if total_held >= quantity:
@@ -129,9 +123,9 @@ if st.session_state.username:
                           (st.session_state.username, tx["date"].isoformat(), tx["stock"], tx["qty"], tx["price"]))
                 c.execute("UPDATE users SET cash=? WHERE username=?", (st.session_state.cash, st.session_state.username))
                 conn.commit()
-                st.success(f"Sold {quantity} shares of {stock_choice} at ₹{price:.2f}")
+                st.success(f"Sold {quantity} shares of {stock_choice}")
             else:
-                st.error("Not enough shares to sell!")
+                st.error("Not enough shares!")
         else:
             st.error("Not enough cash!")
 
@@ -156,36 +150,14 @@ if portfolio:
 else:
     st.write("Your portfolio is empty.")
 
-# --- PORTFOLIO VALUE OVER TIME ---
-if portfolio:
-    st.header("📊 Portfolio Value Over Time")
-    timeline = sorted(set(t["date"] for t in st.session_state.transactions))
-    plot_df = pd.DataFrame(index=timeline)
-    for stock in portfolio.keys():
-        values, cumulative_value = [], 0
-        for date in timeline:
-            txns_on_date = [t for t in st.session_state.transactions if t["stock"] == stock and t["date"] == date]
-            cumulative_value += sum(t["qty"] * t["price"] for t in txns_on_date)
-            values.append(cumulative_value)
-        plot_df[stock] = values
-    plot_df["Total"] = plot_df[list(portfolio.keys())].sum(axis=1)
-    st.line_chart(plot_df)
-
 # --- NAVIGATION BACK TO HOME ---
 st.markdown("---")
-if st.button("🗺️ Return to Game Map", use_container_width=True, key="btn1"):
-    # SYNC: Push current cash and portfolio value back to the game HUD before leaving
+
+# This is the single, consolidated navigation block
+if st.button("🗺️ Return to Game Map", use_container_width=True, key="unique_nav_btn"):
+    # Update core game data before leaving
     if "game" in st.session_state:
         st.session_state.game['cash'] = int(st.session_state.cash)
         st.session_state.game['investments'] = int(total_stock_value)
         st.session_state.game['state'] = "MAP"
-    st.rerun()
-
-# Place this at the very bottom of investmentsim.py
-st.markdown("---")
-if st.button("🗺️ Return to Game Map", use_container_width=True, key="btn2"):
-    # Update the core game cash from the simulator's current cash
-    st.session_state.game['cash'] = int(st.session_state.cash)
-    # Return to map state
-    st.session_state.game['state'] = "MAP"
     st.rerun()

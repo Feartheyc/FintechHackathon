@@ -18,7 +18,7 @@ LANG_CODE_MAP = {
     "Sanskrit": "sa"
 }
 
-def translate_text(text, lang="English"):
+def Translating(text, lang="English"):
     if lang not in LANG_CODE_MAP:
         print(f"Warning: '{lang}' not found in LANG_CODE_MAP, returning original text")
         return text
