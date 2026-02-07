@@ -13,24 +13,19 @@ from phishing_game import render_phishing_game
 st.set_page_config(page_title="Financial Journey", layout="wide", page_icon="🌏", initial_sidebar_state="collapsed")
 MAP_IMG = img_to_base64("assets/level_map.png")
 
-# CHANGED: Initial state is now MAIN_MENU
+# Initial state is now MAIN_MENU
 if "game" not in st.session_state: st.session_state.game = {"state": "MAIN_MENU"}
 
-# APPLY CSS
 apply_custom_css()
 
 # ==========================================
-# 2. MENU RENDERING FUNCTIONS (NEW)
+# 2. MENU RENDERING FUNCTIONS
 # ==========================================
 def render_main_menu():
-    # Using the CSS classes from your config.py
     st.markdown('<div class="menu-title">🌏 ARTH-SAGAR</div>', unsafe_allow_html=True)
     st.markdown('<div class="menu-subtitle">A Financial Literacy RPG Journey</div>', unsafe_allow_html=True)
-    
-    # Spacing
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Centered Buttons
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if st.button("🚀 START JOURNEY"):
@@ -57,7 +52,6 @@ def render_main_menu():
 
 def render_credits():
     st.markdown('<div class="menu-title" style="font-size: 3rem;">CREDITS</div>', unsafe_allow_html=True)
-    
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.markdown("""
@@ -72,7 +66,6 @@ def render_credits():
                 </p>
             </div>
         """, unsafe_allow_html=True)
-        
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("⬅ BACK TO MENU"):
             st.session_state.game['state'] = "MAIN_MENU"
@@ -80,32 +73,27 @@ def render_credits():
 
 def render_tutorial():
     st.markdown('<div class="menu-title" style="font-size: 3rem;">HOW TO PLAY</div>', unsafe_allow_html=True)
-    
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.markdown("""
             <div class="menu-card" style="text-align: left;">
                 <h3 style="color:#facc15;">1. Choose Your Persona</h3>
                 <p>Select from Farmer, Student, Employee, or Founder. Each has unique financial challenges.</p>
-                
                 <h3 style="color:#facc15;">2. Make Smart Choices</h3>
                 <p>Navigate real-life scenarios. Every decision affects your <b>Cash</b>, <b>Savings</b>, and <b>Stress</b>.</p>
-                
                 <h3 style="color:#facc15;">3. Use Your Tools</h3>
                 <p>Check the <b>Stock Market Simulator</b> to grow wealth or the <b>Cyber Shield</b> to learn security.</p>
-                
                 <h3 style="color:#facc15;">4. Win the Game</h3>
                 <p>Survive the debt traps and build the highest Net Worth to win!</p>
             </div>
         """, unsafe_allow_html=True)
-        
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("⬅ BACK TO MENU"):
             st.session_state.game['state'] = "MAIN_MENU"
             st.rerun()
 
 # ==========================================
-# 3. EXISTING HELPERS (Unchanged)
+# 3. HELPERS
 # ==========================================
 def format_effects(effects):
     changes = []
@@ -175,7 +163,7 @@ def render_mini_map(persona, current_lvl):
 """
 
 # ==========================================
-# 4. SCENE RENDERING (Updated to link back to Main Menu)
+# 4. SCENE RENDERING
 # ==========================================
 def render_persona_selection():
     st.markdown("<h1 style='text-align:center; font-size: 3rem;'>🌏 Arth-Sagar</h1>", unsafe_allow_html=True)
@@ -189,9 +177,10 @@ def render_persona_selection():
     for char in chars:
         with char["col"]:
             st.markdown(f'<div class="char-card"><img src="{char["img"]}" class="char-img"><h3>{char["role"]}</h3><p>{char["desc"]}</p></div>', unsafe_allow_html=True)
-            st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
+            # Merge logic: Button resets game and reruns
             if st.button(char["btn"], key=f"sel_{char['role']}", use_container_width=True):
-                st.session_state.game = init_game(char["role"]); st.rerun()
+                st.session_state.game = init_game(char["role"])
+                st.rerun()
     
     st.markdown("<br><hr>", unsafe_allow_html=True)
     if st.button("⬅ Back to Main Menu", use_container_width=True):
@@ -206,7 +195,7 @@ def render_map():
     
     c1, c2 = st.columns([3, 1])
     with c1:
-        # Dynamic Map Image Logic
+        # Dynamic Map Image Logic (Consolidated from both branches)
         persona_map_files = {
             "Farmer": "assets/map_farmer.png",
             "Student": "assets/map_student.png",
@@ -229,7 +218,9 @@ def render_map():
                 #map-container {{ 
                     width: 100%; height: 600px; 
                     background-image: url('data:image/png;base64,{current_map_img}'); 
-                    background-size: cover; background-position: center; border-radius: 12px; 
+                    background-size: cover; 
+                    background-position: center;
+                    border-radius: 12px; 
                 }}
             </style>
             <div id='map-container'><svg viewBox='0 0 800 600' preserveAspectRatio='none'>{svg}</svg></div>
@@ -239,11 +230,28 @@ def render_map():
         st.markdown(f"### Level {current_lvl + 1}")
         evt = get_event_data(p['persona'], current_lvl)
         if evt:
-            if st.button("🚀 Enter Level", type="primary", use_container_width=True): st.session_state.game['state'] = "PLAYING"; st.rerun()
+            if st.button("🚀 Enter Level", type="primary", use_container_width=True): 
+                st.session_state.game['state'] = "PLAYING"
+                st.rerun()
         else:
-            if st.button("🏆 Finish", type="primary"): st.session_state.game['state'] = "END"; st.rerun()
+            if st.button("🏆 Finish", type="primary"): 
+                st.session_state.game['state'] = "END"
+                st.rerun()
+        
         st.markdown("---")
-        if st.button("⬅ Change Role"): st.session_state.game['state'] = "INTRO"; st.rerun()
+        # Merge: Keep the Market button
+        st.markdown("### 🏛️ NSE Terminal")
+        if st.button("📈 Open Stock Market", use_container_width=True):
+            # Pass game cash and persona to simulator session state
+            st.session_state.cash = float(p['cash'])
+            st.session_state.username = p['persona']
+            st.session_state.game['state'] = "MARKET"
+            st.rerun()
+            
+        st.markdown("---")
+        if st.button("⬅ Change Role"): 
+            st.session_state.game['state'] = "INTRO"
+            st.rerun()
 
 def render_scene():
     p = st.session_state.game
@@ -256,7 +264,7 @@ def render_scene():
         st.markdown(render_hud_content(p), unsafe_allow_html=True)
         st.markdown(render_mini_map(p['persona'], p['event_index']), unsafe_allow_html=True)
         st.markdown('<div class="scene-card">', unsafe_allow_html=True)
-        if p['last_feedback']:
+        if p.get('last_feedback'):
             st.markdown(f"<div class='game-alert alert-{p['feedback_type']}'>{p['last_feedback']}</div>", unsafe_allow_html=True)
             p['last_feedback'] = None
         
@@ -265,6 +273,7 @@ def render_scene():
         if "thought" in evt: st.markdown(f'<div class="thought-container"><div class="thought-bubble">💭 {evt["thought"]}</div></div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
         
+        # Merge: Consolidate Advisor check
         if "advisor" in evt:
             with st.expander("💡 Ask Financial Advisor"):
                 st.markdown(f"**Expert Recommendation:**\n\n{evt['advisor']}")
@@ -303,7 +312,16 @@ elif state == "MAP":
     render_map()
 elif state == "PLAYING": 
     render_scene()
+elif state == "MARKET":
+    # Merge: Keep the Market Simulator logic
+    try:
+        with open("investmentsim.py", encoding="utf-8") as f:
+            exec(f.read())
+    except FileNotFoundError:
+        st.error("investmentsim.py not found! Move it out of 'pages/' to the root folder.")
+        if st.button("Back to Map"): st.session_state.game['state'] = "MAP"; st.rerun()
 elif state == "END":
+    # Merge: Combined End Screen
     p = st.session_state.game
     nw = (p['cash'] + p['savings'] + p['investments']) - p['loan']
     st.balloons()
