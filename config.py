@@ -32,7 +32,7 @@ def apply_custom_css():
             text-transform: uppercase;
         }
 
-        /* MENU BUTTONS (Global Button Style) */
+        /* --- BUTTON STYLES --- */
         .stButton > button {
             width: 100%;
             background: rgba(30, 41, 59, 0.7) !important;
@@ -42,7 +42,7 @@ def apply_custom_css():
             color: #f1f5f9 !important;
             font-weight: 600 !important;
             text-transform: uppercase !important;
-            letter-spacing: 1px !important;
+            letter-spacing: 2px !important;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
             text-align: left;
         }
@@ -55,7 +55,7 @@ def apply_custom_css():
             box-shadow: 0 10px 20px rgba(0,0,0,0.4), 0 0 15px rgba(74, 222, 128, 0.2);
         }
 
-        /* MENU / INFO CARD */
+        /* --- MENU / INFO CARD --- */
         .menu-card {
             background: rgba(15, 23, 42, 0.8);
             border: 1px solid #334155;
@@ -66,7 +66,7 @@ def apply_custom_css():
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        /* --- HUD BAR (Flexible & Aligned) --- */
+        /* --- HUD BAR --- */
         .hud-container { 
             background: rgba(15, 23, 42, 0.8); 
             backdrop-filter: blur(12px); 

@@ -5,6 +5,7 @@ from utils import img_to_base64, play_narration, render_interactive_dialogue
 from engine import init_game, try_apply_effects
 from content import get_event_data, STATIC_CAMPAIGNS, STUDENT_EVENTS
 from config import apply_custom_css
+from leaderboard import render_leaderboard_ui
 from phishing_game import render_phishing_game
 
 # ==========================================
@@ -177,7 +178,6 @@ def render_persona_selection():
     for char in chars:
         with char["col"]:
             st.markdown(f'<div class="char-card"><img src="{char["img"]}" class="char-img"><h3>{char["role"]}</h3><p>{char["desc"]}</p></div>', unsafe_allow_html=True)
-            # Merge logic: Button resets game and reruns
             if st.button(char["btn"], key=f"sel_{char['role']}", use_container_width=True):
                 st.session_state.game = init_game(char["role"])
                 st.rerun()
@@ -195,7 +195,6 @@ def render_map():
     
     c1, c2 = st.columns([3, 1])
     with c1:
-        # Dynamic Map Image Logic (Consolidated from both branches)
         persona_map_files = {
             "Farmer": "assets/map_farmer.png",
             "Student": "assets/map_student.png",
@@ -239,10 +238,8 @@ def render_map():
                 st.rerun()
         
         st.markdown("---")
-        # Merge: Keep the Market button
         st.markdown("### 🏛️ NSE Terminal")
         if st.button("📈 Open Stock Market", use_container_width=True):
-            # Pass game cash and persona to simulator session state
             st.session_state.cash = float(p['cash'])
             st.session_state.username = p['persona']
             st.session_state.game['state'] = "MARKET"
@@ -273,7 +270,6 @@ def render_scene():
         if "thought" in evt: st.markdown(f'<div class="thought-container"><div class="thought-bubble">💭 {evt["thought"]}</div></div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
         
-        # Merge: Consolidate Advisor check
         if "advisor" in evt:
             with st.expander("💡 Ask Financial Advisor"):
                 st.markdown(f"**Expert Recommendation:**\n\n{evt['advisor']}")
@@ -313,7 +309,6 @@ elif state == "MAP":
 elif state == "PLAYING": 
     render_scene()
 elif state == "MARKET":
-    # Merge: Keep the Market Simulator logic
     try:
         with open("investmentsim.py", encoding="utf-8") as f:
             exec(f.read())
@@ -321,9 +316,16 @@ elif state == "MARKET":
         st.error("investmentsim.py not found! Move it out of 'pages/' to the root folder.")
         if st.button("Back to Map"): st.session_state.game['state'] = "MAP"; st.rerun()
 elif state == "END":
-    # Merge: Combined End Screen
     p = st.session_state.game
     nw = (p['cash'] + p['savings'] + p['investments']) - p['loan']
+    
     st.balloons()
     st.markdown(f"<div style='text-align:center; padding:40px; background: rgba(15, 23, 42, 0.8); border-radius:20px; border: 1px solid #334155; margin-top: 50px;'><h1>Journey Complete</h1><h2>Net Worth: ₹{nw:,}</h2></div>", unsafe_allow_html=True)
-    if st.button("↺ Restart"): st.session_state.game = {"state": "MAIN_MENU"}; st.rerun()
+    
+    # Render leaderboard UI
+    render_leaderboard_ui(final_score=nw)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("↺ Restart Journey", use_container_width=True): 
+        st.session_state.game = {"state": "MAIN_MENU"}
+        st.rerun()
