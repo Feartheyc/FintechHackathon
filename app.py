@@ -68,11 +68,11 @@ def render_credits():
     with col2:
         st.markdown(f"""
             <div class="menu-card">
-                <h2 style="color:#4ade80;">{t("Developed Team FinLife")}</h2>
-                <p style="color:#94a3b8;">{t("Created for the FinTech Hackathon 2026")}</p>
+                <h2 style="color:#4ade80;">{t("Developed By Team FinLife")}</h2>
+                <p style="color:#94a3b8;">{t("Created for the Athrava Project Friday 2026")}</p>
                 <hr style="border-color: #334155;">
                 <p style="text-align:left;">
-                <b>• {t("Team")}:</b> Yashvi Parikh, Yuvraj Chavan, Devansh Bakrania<br>
+                <b>• {t("Team")}:</b> Yuvraj Chavan, Akash Rana, Rishi Bhuta, Sufiyan Mukadam<br>
                 <b>• {t("Tech Stack")}:</b> Python, Streamlit, Pandas, SQLite<br>
                 <b>• {t("Features")}:</b> {t("RPG Gameplay, Stock Simulator, Cyber Safety")}<br>
                 <b>• {t("Mission")}:</b> {t("Making financial literacy accessible to rural India.")}
